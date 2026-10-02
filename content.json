@@ -132,17 +132,27 @@
             {
               "kind": "full",
               "src": "images/osborn/section-aa-market.jpg",
-              "caption": "Section A-A through the market street, looking east."
+              "caption": "Section A-A, farmers' market: 15 units in table mode, looking east. 1/8\" = 1'-0\"."
+            },
+            {
+              "kind": "full",
+              "src": "images/osborn/section-aa-daily.jpg",
+              "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches. 1/8\" = 1'-0\"."
             },
             {
               "kind": "full",
               "src": "images/osborn/section-bb.jpg",
-              "caption": "Section B-B across the former Osborn Street: stalls above, street utilities below (schematic)."
+              "caption": "Section B-B across the former Osborn Street: stalls above, street utilities below (schematic). 1/8\" = 1'-0\"."
             },
             {
               "kind": "full",
               "src": "images/osborn/elevation.jpg",
-              "caption": "Long elevation of the west row, W1-W6 and the Belmont pairs."
+              "caption": "Long elevation of the west row, W1-W6 and the Belmont pairs. 1/8\" = 1'-0\"."
+            },
+            {
+              "kind": "full",
+              "src": "images/osborn/unit-heights.jpg",
+              "caption": "One unit, two heights: table at 2'-8\" for selling standing, seat at 1'-6\" with a backrest. 1/4\" = 1'-0\"."
             }
           ]
         },
@@ -184,6 +194,44 @@
               "kind": "full",
               "src": "images/osborn/node-detail.jpg",
               "caption": "The joint between bamboo and metal, 3\" = 1'-0\": a steel knife plate slots into the laminated bamboo rail and two stainless bolts pin it to the mast head; rubber and nylon keep the bamboo off the metal."
+            },
+            {
+              "kind": "full",
+              "src": "images/osborn/planters-render.jpg",
+              "caption": "Market day with the planted ballast boxes at the ends of each cart."
+            }
+          ]
+        },
+        {
+          "no": "06",
+          "title": "Urban systems",
+          "items": [
+            {
+              "kind": "text",
+              "text": [
+                "Food, health, heat, mobility, housing and water around the plaza, read at four scales: the city, Community District 16, the five-minute walk and the plaza itself. Every map is drawn from NYC open data at a true scale.",
+                "Grocery stores are within 300 ft, yet premature death is twice the city rate; heat vulnerability is 5 of 5; seven in ten households have no car; 83% of homes within a five-minute walk are NYCHA. The canopy is a walking market and daily shade for its neighbours, not more retail."
+              ]
+            },
+            {
+              "kind": "wide",
+              "src": "images/osborn/urban-scales.jpg",
+              "caption": "City heat vulnerability and the plaza at 1\" = 40'-0\"."
+            },
+            {
+              "kind": "full",
+              "src": "images/osborn/urban-figures.jpg",
+              "caption": "Key figures for Brownsville against New York City."
+            },
+            {
+              "kind": "half",
+              "src": "images/osborn/urban-food-health.jpg",
+              "caption": "Food system and public health: district and five-minute walk."
+            },
+            {
+              "kind": "half",
+              "src": "images/osborn/urban-heat-mobility-housing.jpg",
+              "caption": "Heat and green, mobility, housing and land use."
             }
           ]
         }
