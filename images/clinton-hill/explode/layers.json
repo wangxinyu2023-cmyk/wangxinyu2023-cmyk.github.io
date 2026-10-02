@@ -1,0 +1,74 @@
+{
+ "size": [
+  875,
+  2144
+ ],
+ "layers": [
+  {
+   "name": "Roof",
+   "file": "plate-0.png",
+   "box": [
+    104,
+    156,
+    705,
+    508
+   ],
+   "top": 166
+  },
+  {
+   "name": "Level 4",
+   "file": "plate-1.png",
+   "box": [
+    104,
+    410,
+    705,
+    796
+   ],
+   "top": 420
+  },
+  {
+   "name": "Level 3",
+   "file": "plate-2.png",
+   "box": [
+    104,
+    697,
+    705,
+    1076
+   ],
+   "top": 700
+  },
+  {
+   "name": "Level 2",
+   "file": "plate-3.png",
+   "box": [
+    104,
+    977,
+    705,
+    1381
+   ],
+   "top": 980
+  },
+  {
+   "name": "Ground floor",
+   "file": "plate-4.png",
+   "box": [
+    40,
+    1276,
+    723,
+    1753
+   ],
+   "top": 1286
+  },
+  {
+   "name": "Cellar",
+   "file": "plate-5.png",
+   "box": [
+    54,
+    1662,
+    735,
+    2141
+   ],
+   "top": 1672
+  }
+ ]
+}

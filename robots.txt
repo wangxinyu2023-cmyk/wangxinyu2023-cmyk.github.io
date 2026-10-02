@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://wangxinyu2023-cmyk.github.io/sitemap.xml
