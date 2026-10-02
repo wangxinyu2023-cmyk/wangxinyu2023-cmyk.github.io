@@ -74,8 +74,8 @@
           "label": "direct sun in market hours"
         },
         {
-          "value": "48 mph",
-          "label": "wind limit at FS 1.5"
+          "value": "+6 pts",
+          "label": "more of the plaza shaded at 3 and 5 pm"
         }
       ],
       "blocks": [
@@ -84,7 +84,7 @@
           "no": "01",
           "title": "One cart, two lives",
           "items": [
-            {"kind":"model3d","anim":"deploy","script":"assets/anim/osborn-plaza.js","src":"assets/models/osborn-plaza.js","labels":["Reed shade skin","Folding bamboo wings","Telescoping mast","Lift top: seat to table","Planted ballast box","Swing-out outriggers"],"hint":"Scroll · drag to rotate","caption":"One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."}
+            {"kind":"model3d","anim":"deploy","script":"assets/anim/osborn-plaza.js","src":"assets/models/osborn-plaza.js","labels":["Reed shade skin","Folding bamboo wings","Telescoping mast","Lift top: seat to table","Planted box","Swing-out outriggers"],"hint":"Scroll · drag to rotate","caption":"One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."}
           ]
         },
         {
@@ -171,6 +171,11 @@
               "kind": "wide",
               "src": "images/osborn/sun-hours.jpg",
               "caption": "Ladybug direct sun hours, 30 September."
+            },
+            {
+              "kind": "full",
+              "src": "images/osborn/sun-angle-test.jpg",
+              "caption": "Sun angle test, Wednesday 30 September: the plaza is already 92-100% shaded at 9:00 and 12:00; the canopies add about six points of shade at 15:00 and 17:00."
             }
           ]
         },
@@ -182,13 +187,13 @@
               "kind": "text",
               "text": [
                 "A hybrid frame keeps five aluminium spine rails that carry the lift mechanism and replaces the wings with laminated bamboo, cutting frame emissions by about half while storing carbon.",
-                "At 237 kg a unit resists 48 mph gusts at a factor of safety of 1.5; 80 kg of planted ballast at the ends adds margin and brings back the cooling edge of the first study. Bamboo rails sit on the mast heads through stainless knife plates and isolated M10 bolts."
+                "Planted boxes at both ends bring back the green, cooling edge of the first study. Every joint is bolted, pinned or clipped, so worn parts are swapped rather than repaired; bamboo rails sit on the mast heads through stainless knife plates and isolated bolts."
               ]
             },
             {
               "kind": "third",
               "src": "images/osborn/exploded-unit.jpg",
-              "caption": "One unit taken apart, drawn from the model: reed shade panels, bamboo wings, aluminium masts, table slats, lift and chassis, with the two planted ballast boxes slid out."
+              "caption": "One unit taken apart, drawn from the model: reed shade panels, bamboo wings, aluminium masts, table slats, lift and chassis, with the two planted boxes slid out."
             },
             {
               "kind": "full",
@@ -198,7 +203,7 @@
             {
               "kind": "full",
               "src": "images/osborn/planters-render.jpg",
-              "caption": "Market day with the planted ballast boxes at the ends of each cart."
+              "caption": "Market day with the planted boxes at the ends of each cart."
             }
           ]
         },
@@ -226,12 +231,12 @@
             {
               "kind": "half",
               "src": "images/osborn/urban-food-health.jpg",
-              "caption": "Food system and public health: district and five-minute walk."
+              "caption": "Food system, public health, heat and green: one five-minute-walk map or chart per system."
             },
             {
               "kind": "half",
               "src": "images/osborn/urban-heat-mobility-housing.jpg",
-              "caption": "Heat and green, mobility, housing and land use."
+              "caption": "Mobility, housing and land use."
             }
           ]
         }
