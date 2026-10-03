@@ -77,39 +77,56 @@ XP.register('osborn-plaza', ({ T, util }) => {
     root.add(m);
     if (pt.c in { plinth: 1, wall: 1, brick: 1, stone: 1, mural: 1, steelbox: 1 }) root.add(new T.LineSegments(new T.EdgesGeometry(g, 30), edgeMat));
   });
-  // trees: crowns cast real (solid) shadows, drawn half transparent so the plaza reads under them
-  // in the rendered look the crowns turn opaque but noise-cut, so they throw dappled light
-  const trunkMat = mat(CCOL.trunk, { flatShading: true }), crownMat = mat(CCOL.crown, { flatShading: true, transparent: true, opacity: .5, depthWrite: false });
-  trunkMat.userData.pbr = { color: 0x5f4c3c, roughness: .95 };
-  crownMat.userData.pbr = { color: 0x7a9a55, alphaMap: leaves, alphaTest: .5, transparent: false, opacity: 1, depthWrite: true, roughness: .8, alphaToCoverage: true };
-  const crownDepth = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, alphaMap: leaves, alphaTest: .5, side: T.DoubleSide });
-  (ctx.trees || []).forEach(t => {
-    const grp = new T.Group(); grp.position.set(t.b[0], t.b[1], t.b[2]); root.add(grp);
-    [[t.t, trunkMat], [t.c, crownMat]].forEach(([e, m]) => {
-      if (!e) return; const g = geom(e, [0, 0, 0], 60);
-      if (m === crownMat) {   // pseudo-triplanar UVs, enough for a noise mask
-        const P = g.attributes.position.array, uv = new Float32Array(P.length / 3 * 2);
-        for (let i = 0, j = 0; i < P.length; i += 3, j += 2) { uv[j] = (P[i] * .8 + P[i + 1] * .6) / 7; uv[j + 1] = (P[i + 2] + (P[i] - P[i + 1]) * .35) / 7; }
-        g.setAttribute('uv', new T.BufferAttribute(uv, 2));
-      }
-      const me = new T.Mesh(g, m); me.castShadow = true; me.receiveShadow = true; me.userData.solid = false;
-      if (m === crownMat) me.customDepthMaterial = crownDepth;
-      grp.add(me);
-    });
+  // ---------------- neighbouring buildings (LiDAR massing within ~600 ft) and the stepped 1 ft terrain as a quiet base
+  if (M.env) M.env.parts.forEach(pt => {
+    const g = geom(pt, M.env.ctr, M.env.ext), terr = pt.c === 'terrain';
+    const mt = mat(terr ? 0xe6e2da : pt.c === 'frame' ? 0xe9e4dc : 0xeeece7, { flatShading: !terr });
+    mt.userData.pbr = { color: terr ? 0xc9c3b7 : pt.c === 'frame' ? 0xd9d1c6 : 0xe4e1db, roughness: .92 };
+    const m = new T.Mesh(g, mt); m.receiveShadow = true; m.castShadow = !terr; m.userData.solid = !terr ? undefined : false;
+    root.add(m);
+    if (!terr) root.add(new T.LineSegments(new T.EdgesGeometry(g, 30), new T.LineBasicMaterial({ color: 0x2a2724, transparent: true, opacity: .1 })));
   });
 
-  // ---------------- static crowds (shown when movement is off)
-  const peopleMat = mat(0xbdb7ac, { flatShading: true }); peopleMat.userData.pbr = { color: 0xcdc6ba, roughness: .8 };
-  const protos = M.people.protos.map(e => geom(e, [0, 0, 3], 8));
-  const crowd = list => {
-    const pos = [], idx = []; let n = 0;
-    list.forEach(([k, x, y, a]) => { const g = protos[k].clone(); g.applyMatrix4(new T.Matrix4().makeRotationZ(a).setPosition(x, y, 0)); const P = g.attributes.position.array, I = g.index.array; for (let i = 0; i < P.length; i++) pos.push(P[i]); for (let i = 0; i < I.length; i++) idx.push(I[i] + n); n += P.length / 3; });
-    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    const m = new T.Mesh(g, peopleMat); m.castShadow = m.receiveShadow = true; m.userData.solid = false; root.add(m); return m;
-  };
-  const SEATED = 49;
-  const crowdM = crowd(M.people.market), crowdD = crowd(M.people.daily.filter(p => p[0] !== SEATED)), crowdSeat = crowd(M.people.daily.filter(p => p[0] === SEATED));
-
+  // ---------------- trees: trunk + a canopy of alpha-cut leaf cards scattered through the surveyed crown volume
+  const leafTex = canvasTex(128, 128, (x, w, h) => {      // a cluster of small pointed leaves (alpha) on transparent
+    x.clearRect(0, 0, w, h);
+    for (let i = 0; i < 26; i++) {
+      const cx = 14 + r() * 100, cy = 14 + r() * 100, a = r() * 6.3, L = 11 + r() * 9, W2 = L * .42, k = r();
+      x.save(); x.translate(cx, cy); x.rotate(a); x.fillStyle = 'rgb(' + (52 + k * 40 | 0) + ',' + (88 + k * 46 | 0) + ',' + (40 + k * 22 | 0) + ')';
+      x.beginPath(); x.moveTo(-L, 0); x.quadraticCurveTo(0, -W2, L, 0); x.quadraticCurveTo(0, W2, -L, 0); x.fill();
+      x.strokeStyle = 'rgba(30,50,25,.5)'; x.lineWidth = 1; x.beginPath(); x.moveTo(-L, 0); x.lineTo(L, 0); x.stroke(); x.restore();
+    }
+  }); leafTex.wrapS = leafTex.wrapT = T.ClampToEdgeWrapping;
+  const trunkMat = mat(CCOL.trunk, { flatShading: true }); trunkMat.userData.pbr = { color: 0x56463a, roughness: .95 };
+  const leafMat = mat(0xffffff, { map: leafTex, alphaTest: .5, side: T.DoubleSide, polygonOffset: false });
+  leafMat.userData.pbr = { color: 0xd8e6c4, map: leafTex, alphaTest: .5, roughness: .78, alphaToCoverage: true };
+  const leafDepth = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: leafTex, alphaTest: .5, side: T.DoubleSide });
+  const cards = [], q = new T.Quaternion(), e3 = new T.Euler(), v = new T.Vector3(), sc3 = new T.Vector3(), ctrv = new T.Vector3();
+  (ctx.trees || []).forEach(t => {
+    if (t.t) { const me = new T.Mesh(geom(t.t, [0, 0, 0], 60), trunkMat); me.position.set(t.b[0], t.b[1], t.b[2]); me.castShadow = me.receiveShadow = true; me.userData.solid = false; root.add(me); }
+    if (!t.c) return;
+    const g = geom(t.c, [0, 0, 0], 60), P = g.attributes.position.array, I = g.index.array; g.computeBoundingBox(); g.boundingBox.getCenter(ctrv);
+    const areas = []; let A = 0;
+    for (let i = 0; i < I.length; i += 3) {
+      const a = I[i] * 3, b = I[i + 1] * 3, c = I[i + 2] * 3, ux = P[b] - P[a], uy = P[b + 1] - P[a + 1], uz = P[b + 2] - P[a + 2], wx = P[c] - P[a], wy = P[c + 1] - P[a + 1], wz = P[c + 2] - P[a + 2];
+      A += Math.hypot(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx) / 2; areas.push(A);
+    }
+    const n = Math.min(3200, Math.round(A * 1.25));
+    for (let k = 0; k < n; k++) {
+      const pick = r() * A; let lo = 0, hi = areas.length - 1; while (lo < hi) { const md = (lo + hi) >> 1; if (areas[md] < pick) lo = md + 1; else hi = md; }
+      const i = lo * 3, a = I[i] * 3, b = I[i + 1] * 3, c = I[i + 2] * 3; let s1 = r(), s2 = r(); if (s1 + s2 > 1) { s1 = 1 - s1; s2 = 1 - s2; }
+      v.set(P[a] + (P[b] - P[a]) * s1 + (P[c] - P[a]) * s2, P[a + 1] + (P[b + 1] - P[a + 1]) * s1 + (P[c + 1] - P[a + 1]) * s2, P[a + 2] + (P[b + 2] - P[a + 2]) * s1 + (P[c + 2] - P[a + 2]) * s2);
+      v.lerp(ctrv, .45 * Math.pow(r(), 1.6));            // most leaves near the crown surface, some inside
+      v.x += t.b[0]; v.y += t.b[1]; v.z += t.b[2];
+      e3.set(r() * 6.3, r() * 6.3, r() * 6.3); q.setFromEuler(e3); sc3.setScalar(1.6 + r() * 1.1);
+      cards.push([v.clone(), q.clone(), sc3.x, r()]);
+    }
+  });
+  if (cards.length) {
+    const leaves3 = new T.InstancedMesh(new T.PlaneGeometry(1, 1), leafMat, cards.length), m4 = new T.Matrix4(), cc = new T.Color();
+    cards.forEach(([p, qq, s, k], i) => { m4.compose(p, qq, sc3.set(s, s, s)); leaves3.setMatrixAt(i, m4); leaves3.setColorAt(i, cc.setHSL(.24 + k * .06, .35 + k * .15, .42 + k * .14)); });
+    leaves3.castShadow = leaves3.receiveShadow = true; leaves3.customDepthMaterial = leafDepth; leaves3.userData.solid = false; root.add(leaves3);
+  }
   // ---------------- market goods
   const GCOL = [0x7f9c5c, 0xd98c3f, 0xc77d8e, 0xc99b5c, 0xa65a4b, 0x93abb6, 0xefe8d6];
   const crates = M.goods.crates, produce = M.goods.produce, col = new T.Color(), mm = new T.Matrix4();
@@ -191,13 +208,13 @@ XP.register('osborn-plaza', ({ T, util }) => {
     }
     umeshes.forEach(u => { u.m.instanceMatrix.needsUpdate = true; u.m.computeBoundingSphere && (u.m.boundingSphere = null); });
     crateM.visible = prodM.visible = v === 'market';
-    layoutNow = v; showCrowds();
+    layoutNow = v;
   }
   let layoutNow = 'market', pathsOn = false;
   function showCrowds() {
-    crowdM.visible = layoutNow === 'market' && !pathsOn;
-    crowdD.visible = layoutNow === 'daily' && !pathsOn;
-    crowdSeat.visible = layoutNow === 'daily';
+    // static Rhino crowds are not used in the explorer: people are the scale figures of the Movement tool
+
+
   }
 
   // ---------------- circulation (plaza feet: x across, y north; Belmont Ave to the north, the gate in the south wall)
@@ -240,7 +257,7 @@ XP.register('osborn-plaza', ({ T, util }) => {
     return { pts, dwell, speed: 1.0 + rnd() * .3, kind: 0, phase: rnd() * 200, gap: 4 + rnd() * 10 };
   }
   const front = a => [Math.sin(a), -Math.cos(a)];
-  const vendors = LAY.market.map(([x, y, a]) => { const f = front(a); return { pts: [[x - f[0] * 1.9, y - f[1] * 1.9]], kind: 3 }; });
+  const vendors = LAY.market.map(([x, y, a]) => { const f = front(a); return { pts: [[x - f[0] * 1.9, y - f[1] * 1.9]], kind: 3, face: Math.atan2(f[1], f[0]) }; });
   const market = { agents: [...vendors], routes: [SPINE, [[1, 38.4], [-21, 38.4]], [[0.5, -47], [8, -44.5], [14, -38], [17, -32], [20.4, -30.8]]],
     legend: [[0, 'Shoppers'], [3, 'Stallholders']], note: 'Wednesday market: shoppers come in through the south gate or from Belmont Avenue, walk the 3.5 m aisle and stop at two to four stalls.' };
   for (let i = 0; i < 46; i++) market.agents.push(shopper(i));
@@ -270,6 +287,11 @@ XP.register('osborn-plaza', ({ T, util }) => {
     daily.agents.push({ pts, dwell, sit, speed: 1.05, kind: 2, phase: n * 23 + rnd() * 30, gap: 8 + rnd() * 25 });
   });
 
+  // people already sitting on the benches (positions from the Rhino everyday layout), facing out from their bench
+  M.people.daily.filter(p => p[0] === 49).forEach(([k, x, y]) => {
+    const d = LAY.daily.reduce((b, q) => Math.hypot(q[1] - x, q[2] - y) < Math.hypot(b[1] - x, b[2] - y) ? q : b), f = front(d[3]);
+    daily.agents.push({ pts: [[x, y]], sit: true, kind: 2, face: Math.atan2(f[1], f[0]) });
+  });
   setLayout('market');
   return {
     unit: 'ft', root,
@@ -288,8 +310,8 @@ XP.register('osborn-plaza', ({ T, util }) => {
     gizmoScale: .62,
     layouts: { options: [['market', 'Market day'], ['daily', 'Everyday']], value: 'market', set: setLayout },
     paths: { scenarios: { market, daily }, colors: [0xbf7352, 0x55667a, 0x7f9a5c, 0x9a7a4c] },
-    onPaths: on => { if (on !== pathsOn) { pathsOn = on; showCrowds(); } },
-    shade: { rect: [-29.2, -49.1, 30.4, 49.8], z: 0.12, cell: 2, label: 'Plaza floor' },
-    sunNote: 'Plan north from the site survey (11° east of the model’s +Y). Neighbouring buildings are not modelled, so late-day building shadows are missing; reed panels let about a third of the sun through.'
+    casterBox: [-640, -640, -35, 640, 640, 212],
+    shade: { rect: [-29.2, -49.1, 30.4, 49.8], z: 0.12, cell: 2, label: 'Plaza floor', compare: { label: 'without the canopies', hide: on => { umeshes.forEach(u => { u.m.visible = !on; }); crateM.visible = prodM.visible = !on && layoutNow === 'market'; } } },
+    sunNote: 'Plan north from the site survey (11° east of the model’s +Y). Neighbouring buildings within 600 ft come from the LiDAR context model; reed panels let about a third of the sun through.'
   };
 });

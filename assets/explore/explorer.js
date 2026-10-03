@@ -200,7 +200,7 @@
       modelLines.forEach(l => { l.visible = !render; });
       renderer.toneMapping = render ? T.ACESFilmicToneMapping : T.NoToneMapping;
       scene.fog = render && look.high ? fog : null; sky.visible = render;
-      if (P.inst) P.inst.material = render ? agentStd : agentMat;
+      P.figs.forEach(m => { m.material = render ? agentStd : agentMat; });
       stage.classList.toggle('xp-render', render);
       setQuality(look.high);
     }
@@ -495,7 +495,11 @@
         const c = new V3(i & 1 ? sb.max.x : sb.min.x, i & 2 ? sb.max.y : sb.min.y, i & 4 ? sb.max.z : sb.min.z).applyMatrix4(inv);
         x0 = Math.min(x0, c.x); x1 = Math.max(x1, c.x); y0 = Math.min(y0, c.y); y1 = Math.max(y1, c.y); z0 = Math.min(z0, c.z); z1 = Math.max(z1, c.z);
       }
-      sc.left = x0; sc.right = x1; sc.bottom = y0; sc.top = y1; sc.near = Math.max(.01, -z1 - fR * .05); sc.far = -z0 + fR * .05; sc.updateProjectionMatrix();
+      if (spec.casterBox) {   // tall neighbours outside the focus still have to land in the shadow map's depth range
+        const cb = spec.casterBox;
+        for (let i = 0; i < 8; i++) { const c = W(i & 1 ? cb[3] : cb[0], i & 2 ? cb[4] : cb[1], i & 4 ? cb[5] : cb[2]).applyMatrix4(inv); z1 = Math.max(z1, c.z); }
+      }
+      sc.left = x0; sc.right = x1; sc.bottom = y0; sc.top = y1; sc.near = -z1 - fR * .05; sc.far = -z0 + fR * .05; sc.updateProjectionMatrix();
       const texel = Math.max(x1 - x0, y1 - y0) / sun.shadow.mapSize.x;
       sun.shadow.bias = -.0002; sun.shadow.normalBias = texel * 1.4; sun.shadow.radius = 2;
     }
@@ -566,13 +570,13 @@
       let h = '';
       if (s.on && sol) h += '<span><b>' + d + ' ' + MON[m] + ' &middot; ' + hhmm(s.min) + ' ' + tzOf(s.year, s.doy, s.min) + '</b>' +
         (sol.alt > 0 ? 'Sun ' + sol.alt.toFixed(0) + '° high, ' + compass(sol.az) : sol.alt > -6 ? 'Twilight' : 'Night') + '</span>';
-      if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun</span>';
+      if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun' + (spec.shade.compare && shadeVal2 !== null ? ' &middot; ' + Math.round(shadeVal2 * 100) + '% ' + spec.shade.compare.label : '') + '</span>';
       hud.innerHTML = h;
       markTabs();
     }
 
     // -------------------------------------------------- shade map (GPU sampling of the shadow map on a coarse grid)
-    let shadeVal = null, shadeDirty = true, shadeOverlay = null, shadeProbe = null, lastShade = 0;
+    let shadeVal = null, shadeVal2 = null, shadeDirty = true, shadeOverlay = null, shadeProbe = null, lastShade = 0;
     function buildShade() {
       const sh = spec.shade, [x0, y0, x1, y1] = sh.rect, cell = sh.cell || 2, ss = 4;
       const cols = Math.round((x1 - x0) / cell), rows = Math.round((y1 - y0) / cell), w = x1 - x0, h = y1 - y0;
@@ -590,59 +594,82 @@
     }
     function runShade() {
       const P = shadeProbe; if (!P) return;
-      if (!sol || sol.alt <= 0 || !sun.castShadow) { shadeVal = 0; P.data.fill(0); for (let i = 0; i < P.cols * P.rows; i++) { P.data[4 * i] = 63; P.data[4 * i + 1] = 95; P.data[4 * i + 2] = 127; P.data[4 * i + 3] = 110; } P.tex.needsUpdate = true; hudSun(); return; }
-      const cut = S.section.on, saved = plane.clone();   // measure the whole plaza, not the cut model
-      if (cut) { plane.set(new V3(-1, 0, 0), 1e6); renderer.shadowMap.needsUpdate = true; renderer.setRenderTarget(P.rt); renderer.render(scene, cam); renderer.setRenderTarget(null); plane.copy(saved); shadowDirty = true; }
-      const parent = sun.parent, hi = hemi.intensity, si = sun.intensity, sc = sun.color.getHex();
-      P.pScene.add(sun, sun.target); sun.intensity = 1; sun.color.set(0xffffff);
-      renderer.setRenderTarget(P.rt);
-      const run = (m, buf) => { P.pA.visible = m === P.pA; P.pB.visible = m === P.pB; renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.render(P.pScene, P.pc); renderer.readRenderTargetPixels(P.rt, 0, 0, P.cols * P.ss, P.rows * P.ss, buf); };
-      run(P.pA, P.bufA); run(P.pB, P.bufB);
-      renderer.setRenderTarget(null); renderer.setClearColor(0x000000, 0);
-      parent.add(sun, sun.target); sun.intensity = si; sun.color.setHex(sc); hemi.intensity = hi;
-      const SW = P.cols * P.ss; let tot = 0;
-      for (let r = 0; r < P.rows; r++) for (let c = 0; c < P.cols; c++) {
-        let a = 0, n = 0;
-        for (let j = 0; j < P.ss; j++) for (let i = 0; i < P.ss; i++) { const k = ((r * P.ss + j) * SW + c * P.ss + i) * 4, b = P.bufB[k]; if (b > 2) { a += Math.min(1, P.bufA[k] / b); n++; } }
-        const f = n ? a / n : 0; tot += f;
-        const o = (r * P.cols + c) * 4;   // sun: warm amber, shade: cool slate
-        P.data[o] = 63 + (238 - 63) * f; P.data[o + 1] = 95 + (164 - 95) * f; P.data[o + 2] = 127 + (64 - 127) * f; P.data[o + 3] = 120 + 40 * f;
-      }
-      P.tex.needsUpdate = true; shadeVal = tot / (P.cols * P.rows); hudSun();
+      if (!sol || sol.alt <= 0 || !sun.castShadow) { shadeVal = 0; shadeVal2 = 0; P.data.fill(0); for (let i = 0; i < P.cols * P.rows; i++) { P.data[4 * i] = 63; P.data[4 * i + 1] = 95; P.data[4 * i + 2] = 127; P.data[4 * i + 3] = 110; } P.tex.needsUpdate = true; hudSun(); return; }
+      const cut = S.section.on, saved = plane.clone(), cmp = spec.shade.compare;   // measure the whole plaza, not the cut model
+      const refresh = () => { renderer.shadowMap.needsUpdate = true; renderer.setRenderTarget(P.rt); renderer.render(scene, cam); renderer.setRenderTarget(null); };
+      const probe = fill => {
+        const parent = sun.parent, si = sun.intensity, sc = sun.color.getHex();
+        P.pScene.add(sun, sun.target); sun.intensity = 1; sun.color.set(0xffffff);
+        renderer.setRenderTarget(P.rt);
+        const run = (m, buf) => { P.pA.visible = m === P.pA; P.pB.visible = m === P.pB; renderer.setClearColor(0x000000, 1); renderer.clear(); renderer.render(P.pScene, P.pc); renderer.readRenderTargetPixels(P.rt, 0, 0, P.cols * P.ss, P.rows * P.ss, buf); };
+        run(P.pA, P.bufA); run(P.pB, P.bufB);
+        renderer.setRenderTarget(null); renderer.setClearColor(0x000000, 0);
+        parent.add(sun, sun.target); sun.intensity = si; sun.color.setHex(sc);
+        const SW = P.cols * P.ss; let tot = 0;
+        for (let r = 0; r < P.rows; r++) for (let c = 0; c < P.cols; c++) {
+          let a = 0, n = 0;
+          for (let j = 0; j < P.ss; j++) for (let i = 0; i < P.ss; i++) { const k = ((r * P.ss + j) * SW + c * P.ss + i) * 4, b = P.bufB[k]; if (b > 2) { a += Math.min(1, P.bufA[k] / b); n++; } }
+          const f = n ? a / n : 0; tot += f;
+          if (fill) { const o = (r * P.cols + c) * 4; P.data[o] = 63 + (238 - 63) * f; P.data[o + 1] = 95 + (164 - 95) * f; P.data[o + 2] = 127 + (64 - 127) * f; P.data[o + 3] = 120 + 40 * f; }
+        }
+        if (fill) P.tex.needsUpdate = true;
+        return tot / (P.cols * P.rows);
+      };
+      if (cut) { plane.set(new V3(-1, 0, 0), 1e6); refresh(); }
+      shadeVal = probe(true);
+      if (cmp) { cmp.hide(true); refresh(); shadeVal2 = probe(false); cmp.hide(false); }
+      if (cut) plane.copy(saved);
+      if (cut || cmp) shadowDirty = true;
+      hudSun();
     }
 
     // -------------------------------------------------- paths: deterministic agents
-    const P = { agents: [], inst: null, trail: null, routeLines: null, scen: null };
+    const P = { agents: [], inst: null, figs: [], trail: null, routeLines: null, scen: null };
     const K = 26, TDT = .22;            // trail samples, seconds between samples
-    const personGeo = (() => {
-      // a 1.7 m stylised figure: two legs, torso, head (merged, non-indexed)
-      const parts = [], add = (g, x, y) => { g.translate(x * U, y * U, 0); parts.push(g.toNonIndexed()); };
-      add(new T.CapsuleGeometry(.07 * U, .72 * U, 3, 8), -.085, .43); add(new T.CapsuleGeometry(.07 * U, .72 * U, 3, 8), .085, .43);
-      const torso = new T.CapsuleGeometry(.155 * U, .4 * U, 4, 10); torso.scale(1, 1, .72); add(torso, 0, 1.13);
-      add(new T.SphereGeometry(.105 * U, 12, 8), 0, 1.57);
-      const g = new T.BufferGeometry();
-      ['position', 'normal'].forEach(k => { const n = parts.reduce((s, p) => s + p.attributes[k].array.length, 0), out = new Float32Array(n); let o = 0; parts.forEach(p => { out.set(p.attributes[k].array, o); o += p.attributes[k].array.length; }); g.setAttribute(k, new T.BufferAttribute(out, 3)); });
-      return g;
-    })();
-    const agentMat = new T.MeshLambertMaterial({ color: 0xffffff, clippingPlanes: [plane] });
+    // architectural-model scale figures (1.7 m, slim, neutral): standing, two walking strides, seated on a 0.45 m seat
+    const FIG = (() => {
+      const limb = (out, a, b, r0, r1) => {   // tapered cylinder from point a to point b (metres, local: x side, y up, z forward)
+        const A = new V3(...a).multiplyScalar(U), B = new V3(...b).multiplyScalar(U), d = B.clone().sub(A), g = new T.CylinderGeometry(r1 * U, r0 * U, d.length(), 8, 1);
+        g.applyQuaternion(new T.Quaternion().setFromUnitVectors(new V3(0, 1, 0), d.clone().normalize())); g.translate((A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2); out.push(g.toNonIndexed());
+        const j = new T.SphereGeometry(r1 * U, 8, 6); j.translate(B.x, B.y, B.z); out.push(j.toNonIndexed());
+      };
+      const blob = (out, c, r, sy, sz) => { const g = new T.SphereGeometry(r * U, 14, 10); g.scale(1, sy, sz); g.translate(c[0] * U, c[1] * U, c[2] * U); out.push(g.toNonIndexed()); };
+      const merge = parts => { const g = new T.BufferGeometry(); ['position', 'normal'].forEach(k => { const n = parts.reduce((s, p) => s + p.attributes[k].array.length, 0), out = new Float32Array(n); let o = 0; parts.forEach(p => { out.set(p.attributes[k].array, o); o += p.attributes[k].array.length; }); g.setAttribute(k, new T.BufferAttribute(out, 3)); }); return g; };
+      const body = (o, hip, lean) => {   // torso, shoulders, neck, head above a hip height
+        blob(o, [0, hip + .02, lean * .2], .135, .75, .7); blob(o, [0, hip + .3, lean * .6], .16, 1.55, .62);
+        limb(o, [0, hip + .5, lean], [0, hip + .58, lean * 1.1], .045, .045); blob(o, [0, hip + .68, lean * 1.15 + .01], .1, 1.15, 1.05);
+      };
+      const stand = [], wA = [], wB = [], sit = [];
+      body(stand, .9, 0);
+      [-1, 1].forEach(s => { limb(stand, [s * .085, .9, 0], [s * .095, .46, .01], .068, .052); limb(stand, [s * .095, .46, .01], [s * .1, .06, 0], .05, .038); blob(stand, [s * .1, .03, .05], .045, .6, 1.9);
+        limb(stand, [s * .2, 1.33, 0], [s * .225, 1.06, -.01], .042, .034); limb(stand, [s * .225, 1.06, -.01], [s * .23, .82, .02], .033, .028); });
+      [[wA, 1], [wB, -1]].forEach(([o, ph]) => { body(o, .89, .03);
+        [-1, 1].forEach(s => { const f = s * ph; limb(o, [s * .085, .89, 0], [s * .09, .47, f * .14], .068, .052); limb(o, [s * .09, .47, f * .14], [s * .1, .06, f * (f > 0 ? .3 : .2) - (f < 0 ? .12 : 0)], .05, .038); blob(o, [s * .1, .03, f * .3 + .05 - (f < 0 ? .22 : 0)], .045, .6, 1.9);
+          limb(o, [s * .2, 1.32, .02], [s * .22, 1.06, -f * .1], .042, .034); limb(o, [s * .22, 1.06, -f * .1], [s * .225, .84, -f * .17], .033, .028); }); });
+      body(sit, .47, -.03);
+      [-1, 1].forEach(s => { limb(sit, [s * .09, .48, -.02], [s * .1, .5, .42], .07, .055); limb(sit, [s * .1, .5, .42], [s * .1, .06, .46], .05, .038); blob(sit, [s * .1, .03, .5], .045, .6, 1.9);
+        limb(sit, [s * .2, .9, -.03], [s * .21, .66, .04], .042, .034); limb(sit, [s * .21, .66, .04], [s * .16, .55, .3], .033, .028); });
+      return [stand, wA, wB, sit].map(merge);
+    })();    const agentMat = new T.MeshLambertMaterial({ color: 0xffffff, clippingPlanes: [plane] });
     function compileAgent(a) {
       const pts = a.pts.map(p => W(p[0], p[1], p[2] || 0)), ev = []; let t = a.delay || 0;
       const sp = (a.speed || 1.25) * U;
-      if (pts.length === 1) return { ev: [{ k: 'd', t0: 0, t1: 1e9, p: pts[0], sit: !!a.sit }], tot: 1e9, off: 0, kind: a.kind || 0, loop: false };
+      const face = a.face !== undefined ? Math.atan2(Math.cos(a.face), -Math.sin(a.face)) : null, h = .93 + ((a.pts.length * 7 + (a.phase || 0) * 13) % 1 + .37 * ((a.kind || 0) + 1)) % 1 * .14;
+      if (pts.length === 1) return { ev: [{ k: 'd', t0: 0, t1: 1e9, p: pts[0], sit: !!a.sit }], tot: 1e9, off: 0, kind: a.kind || 0, loop: false, face, h };
       for (let i = 0; i < pts.length; i++) {
         const dw = a.dwell && a.dwell[i] || 0;
-        if (dw) { ev.push({ k: 'd', t0: t, t1: t + dw, p: pts[i], sit: !!(a.sit && a.sit[i]) }); t += dw; }
+        if (dw) { const lw = ev.filter(e => e.k === 'w').pop(); ev.push({ k: 'd', t0: t, t1: t + dw, p: pts[i], sit: !!(a.sit && a.sit[i]), hd: lw ? Math.atan2(lw.b.x - lw.a.x, lw.b.z - lw.a.z) : 0 }); t += dw; }
         if (i < pts.length - 1) { const L = pts[i].distanceTo(pts[i + 1]); if (L < 1e-4) continue; const dt = L / sp * (a.slow && a.slow[i] ? a.slow[i] : 1); ev.push({ k: 'w', t0: t, t1: t + dt, a: pts[i], b: pts[i + 1] }); t += dt; }
       }
-      return { ev, start: a.delay || 0, tot: t + (a.gap || 0), off: a.phase || 0, kind: a.kind || 0, loop: a.loop !== false };
+      return { ev, start: a.delay || 0, tot: t + (a.gap || 0), off: a.phase || 0, kind: a.kind || 0, loop: a.loop !== false, face, h };
     }
-    const tmpV = new V3();
+    const tmpV = new V3(); let curEv = null;
     function agentAt(c, t, out) {   // returns false while the agent is off stage
-      if (c.tot >= 1e9) { out.copy(c.ev[0].p); return c.ev[0].sit ? 2 : 1; }
+      if (c.tot >= 1e9) { curEv = c.ev[0]; out.copy(c.ev[0].p); return c.ev[0].sit ? 2 : 1; }
       let tt = t + c.off; if (c.loop) tt = ((tt % c.tot) + c.tot) % c.tot; else if (tt > c.tot) tt = c.ev.length ? c.ev[c.ev.length - 1].t1 - 1e-3 : 0;
       if (tt < c.start) return 0;
       for (const e of c.ev) if (tt >= e.t0 && tt < e.t1) {
-        if (e.k === 'd') { out.copy(e.p); return e.sit ? 2 : 1; }
+        curEv = e; if (e.k === 'd') { out.copy(e.p); return e.sit ? 2 : 1; }
         out.lerpVectors(e.a, e.b, (tt - e.t0) / (e.t1 - e.t0)); return 1;
       }
       return 0;
@@ -652,11 +679,12 @@
       const scKey = spec.layouts && spec.paths.scenarios[S.layout] ? S.layout : Object.keys(spec.paths.scenarios)[0];
       if (P.scen === scKey) return; P.scen = scKey;
       const sc = spec.paths.scenarios[scKey];
-      [P.inst, P.trail, P.routeLines].forEach(o => { if (o) { scene.remove(o); o.geometry.dispose(); } });
+      [P.trail, P.routeLines].forEach(o => { if (o) { scene.remove(o); o.geometry.dispose(); } }); if (P.inst) { scene.remove(P.inst); P.figs.forEach(m => m.dispose && m.dispose()); }
       P.agents = sc.agents.map(compileAgent);
       const n = P.agents.length;
-      P.inst = new T.InstancedMesh(personGeo, look.render ? agentStd : agentMat, n); P.inst.frustumCulled = false; P.inst.receiveShadow = true; P.inst.instanceMatrix.setUsage(T.DynamicDrawUsage);
-      const col = new T.Color(); P.agents.forEach((a, i) => P.inst.setColorAt(i, col.set(COLS[a.kind])));
+      P.inst = new T.Group(); const col = new T.Color(), white = new T.Color(0xf1eee8);
+      P.figs = FIG.map(g => { const m = new T.InstancedMesh(g, look.render ? agentStd : agentMat, n); m.frustumCulled = false; m.receiveShadow = true; m.instanceMatrix.setUsage(T.DynamicDrawUsage);
+        P.agents.forEach((a, i) => m.setColorAt(i, col.set(COLS[a.kind]).lerp(white, .82))); P.inst.add(m); return m; });
       scene.add(P.inst);
       // trails: one ribbon per agent, alpha fading towards the tail
       const nv = n * K * 2, pos = new Float32Array(nv * 3), rgba = new Float32Array(nv * 4), idx = [];
@@ -676,7 +704,7 @@
       if (ui.legend) ui.legend.innerHTML = (sc.legend || []).map(l => '<li><i style="background:#' + COLS[l[0]].toString(16).padStart(6, '0') + '"></i>' + l[1] + '</li>').join('');
       if (ui.pathNote) ui.pathNote.textContent = sc.note || '';
     }
-    const mtx = new T.Matrix4(), qY = new T.Quaternion(), sclV = new V3(), pA = new V3(), pB = new V3(), perp = new V3();
+    const HIDE4 = new T.Matrix4().makeScale(0, 0, 0), mtx = new T.Matrix4(), qY = new T.Quaternion(), sclV = new V3(), pA = new V3(), pB = new V3(), perp = new V3();
     function updatePaths() {
       const on = S.paths.on && !!spec.paths;
       if (spec.onPaths) spec.onPaths(on, S.layout);
@@ -686,12 +714,17 @@
       const t = S.paths.t, tp = P.trail.geometry.attributes.position.array, tc = P.trail.geometry.attributes.color.array, hw = .13 * U, lift = .05 * U;
       P.agents.forEach((a, i) => {
         const st = agentAt(a, t, pA);
-        if (!st) { mtx.makeScale(0, 0, 0); P.inst.setMatrixAt(i, mtx); }
-        else {
+        const fig = !st ? -1 : st === 2 ? 3 : 0, nearCam = st && C.mode === 'eye' && cam.position.distanceTo(pA) < 3.2 * U;   // don't let figures walk through the lens
+        if (!st || nearCam) P.figs.forEach(m => m.setMatrixAt(i, HIDE4));
+        else if (!nearCam) {
           // heading from a moment earlier
-          const s2 = agentAt(a, t - .3, pB); let yaw = 0; if (s2 && pB.distanceToSquared(pA) > 1e-6) yaw = Math.atan2(pA.x - pB.x, pA.z - pB.z);
-          qY.setFromAxisAngle(new V3(0, 1, 0), yaw); sclV.set(1, st === 2 ? .74 : 1, 1);
-          mtx.compose(st === 2 ? tmpV.copy(pA).setY(pA.y + .3 * U) : pA, qY, sclV); P.inst.setMatrixAt(i, mtx);
+          const s2 = agentAt(a, t - .3, pB), moving = s2 && pB.distanceToSquared(pA) > 1e-6; let yaw = a.yaw || 0;
+          agentAt(a, t, pA); const ev0 = curEv, hd = ev0 && ev0.hd !== undefined ? ev0.hd : (a.yaw || 0);
+          if (moving) yaw = Math.atan2(pA.x - pB.x, pA.z - pB.z); else yaw = a.face !== null ? a.face : st === 2 ? hd + Math.PI : hd;
+          if (moving || a.face === null || st !== 2) a.yaw = moving ? yaw : a.yaw;
+          let k = fig; if (moving) k = Math.floor((t + a.off) * 1.9) % 2 ? 1 : 2;
+          qY.setFromAxisAngle(new V3(0, 1, 0), yaw); sclV.setScalar(a.h);
+          mtx.compose(pA, qY, sclV); P.figs.forEach((m, j) => m.setMatrixAt(i, j === k ? mtx : HIDE4));
         }
         if (!S.paths.trails) return;
         let prev = null;
@@ -706,7 +739,7 @@
           prev = prev || new V3(); prev.copy(pB);
         }
       });
-      P.inst.instanceMatrix.needsUpdate = true;
+      P.figs.forEach(m => { m.instanceMatrix.needsUpdate = true; });
       P.trail.geometry.attributes.position.needsUpdate = P.trail.geometry.attributes.color.needsUpdate = true;
       if (ui.pathClock) { const m = Math.floor(t / 60), s = Math.floor(t % 60); ui.pathClock.textContent = m + ':' + String(s).padStart(2, '0'); }
     }
@@ -854,6 +887,7 @@
     setView(v0 === 'eye' && !spec.eye ? 'axon' : v0);
     if (Q.get('yaw') || Q.get('pitch')) { if (Q.get('yaw')) C.yaw = +Q.get('yaw'); if (Q.get('pitch')) C.pitch = +Q.get('pitch'); if (C.mode !== 'eye') { C.mode = 'axon'; fit(1.04); } }
     if (Q.get('zoom')) C.dist /= +Q.get('zoom');
+    if (Q.get('target')) { const tg = Q.get('target').split(',').map(Number); C.target.copy(W(tg[0], tg[1], tg[2] || 0)); }
     if (S.section.on && Q.get('flip') === null) setSection({ flip: faceCam(S.section.axis) });
     applyCam();
     el.classList.add('xp-ready');
