@@ -70,12 +70,12 @@
           "label": "units as everyday benches"
         },
         {
-          "value": "-27%",
-          "label": "direct sun in market hours"
+          "value": "-21%",
+          "label": "summer-afternoon sun on the plaza, market day"
         },
         {
-          "value": "+6 pts",
-          "label": "more of the plaza shaded at 3 and 5 pm"
+          "value": "-68%",
+          "label": "sun on the ground under the canopies"
         }
       ],
       "blocks": [
@@ -163,19 +163,19 @@
             {
               "kind": "text",
               "text": [
-                "Direct-sun hours were computed with Ladybug on the full site model. During market hours the buildings shade the west half of the plaza; the canopies matter most for the east row, where the low WSW sun reaches under the stalls.",
-                "The reed plane lets 30% of the light through, so it trades some midday shade for airflow and a filtered, dappled light."
+                "Peak summer, June to August, noon to 5 pm, simulated with Ladybug Tools and Radiance on the site model and a LiDAR model of the neighbouring buildings. The market canopies cut solar radiation on the plaza by 21% and on the ground beneath them by two thirds; the everyday benches cut it by 13%.",
+                "On a 92 F July afternoon the whole plaza is in strong heat stress, with or without canopies, but very strong heat stress (UTCI above 38 C) drops from 21% to 9% of the plaza. The reed lets 30% of the sun through, trading a little shade for airflow."
               ]
             },
             {
               "kind": "wide",
               "src": "images/osborn/sun-hours.jpg",
-              "caption": "Ladybug direct sun hours, 30 September."
+              "caption": "Cumulative solar radiation, June-August 12:00-17:00 (no canopies / market day / everyday), and UTCI at 14:00 on a July heat day."
             },
             {
               "kind": "full",
               "src": "images/osborn/sun-angle-test.jpg",
-              "caption": "Sun angle test, Wednesday 30 September: the plaza is already 92-100% shaded at 9:00 and 12:00; the canopies add about six points of shade at 15:00 and 17:00."
+              "caption": "Sun angle test, 21 July: 65-68% of the plaza is in direct sun at 13:00-14:00; the market canopies bring this down to 52-54%."
             }
           ]
         },
