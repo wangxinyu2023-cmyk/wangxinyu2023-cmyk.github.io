@@ -84,7 +84,8 @@
           "no": "01",
           "title": "One cart, two lives",
           "items": [
-            {"kind":"model3d","anim":"deploy","script":"assets/anim/osborn-plaza.js","src":"assets/models/osborn-plaza.js","labels":["Reed shade skin","Folding bamboo wings","Telescoping mast","Lift top: seat to table","Planted box","Swing-out outriggers"],"hint":"Scroll · drag to rotate","caption":"One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."}
+            {"kind":"model3d","anim":"deploy","script":"assets/anim/osborn-plaza.js","src":"assets/models/osborn-plaza.js","labels":["Reed shade skin","Folding bamboo wings","Telescoping mast","Lift top: seat to table","Planted box","Swing-out outriggers"],"hint":"Scroll · drag to rotate","caption":"One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."},
+            {"kind":"explorer","id":"explore","model":"assets/models/osborn-plaza.js","adapter":"assets/explore/osborn-plaza.js","tools":["section","sun","paths"],"lat":40.66849,"lon":-73.90852,"north_deg":78.946,"site":"Osborn Plaza, Brownsville","default_sun":"2026-07-21T14:00","title":"The plaza on any day, at any hour","caption":"Cut through the carts, set the sun to any date and hour at the plaza's real latitude and orientation, and watch a market day or an ordinary afternoon move through it. The reed panels let part of the sun through, so their shade is filtered; the shade map samples the plaza floor on a 2 ft grid."}
           ]
         },
         {
@@ -341,7 +342,8 @@
               "kind": "explode",
               "src": "images/clinton-hill/explode",
               "caption": "Scroll to take the building apart: cellar library, ground-floor civic core, three residential floors and the roof with its skylights. Red lines trace the vertical circulation."
-            }
+            },
+            {"kind":"explorer","id":"explore","model":"assets/models/clinton-hill.js","adapter":"assets/explore/clinton-hill.js","tools":["section","sun","paths"],"lat":40.6876,"lon":-73.9663,"north_deg":90,"site":"Washington Ave, Clinton Hill","default_sun":"2026-03-21T15:00","title":"Inside the stack","caption":"Slice the building in plan at any floor or in section, light it for any date on Washington Avenue, and follow library visitors down the reading stair and residents up the stair and elevator cores. Plan north follows the model's +Y axis, with Washington Avenue taken as running north-south."}
           ]
         },
         {
@@ -573,7 +575,8 @@
           "no": "01",
           "title": "Building it up",
           "items": [
-            {"kind":"model3d","anim":"grow","script":"assets/anim/between-levels.js","src":"assets/models/between-levels.js","labels":["Upper street +12 m","Middle lane +6 m","Lower street +0 m"],"hint":"Scroll · drag to rotate","caption":"The building assembled from its own model: hillside and streets, frame, two stepped wings, forty-eight rooms coloured by type, and the shared stair-street that carries a public route uphill."}
+            {"kind":"model3d","anim":"grow","script":"assets/anim/between-levels.js","src":"assets/models/between-levels.js","labels":["Upper street +12 m","Middle lane +6 m","Lower street +0 m"],"hint":"Scroll · drag to rotate","caption":"The building assembled from its own model: hillside and streets, frame, two stepped wings, forty-eight rooms coloured by type, and the shared stair-street that carries a public route uphill."},
+            {"kind":"explorer","id":"explore","model":"assets/models/between-levels.js","adapter":"assets/explore/between-levels.js","tools":["section","sun","paths"],"lat":40.7128,"lon":-74.006,"north_deg":90,"site":"Speculative site, sun for New York City","default_sun":"2026-10-15T16:00","title":"Walking up through the building","caption":"Cut through the stepped wings, light the slope through the year and follow people up the stair-street from the lower street to the upper one. The site is speculative: sun angles are computed for New York City, with the slope rising to the north."}
           ]
         },
         {

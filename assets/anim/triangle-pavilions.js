@@ -27,7 +27,10 @@
   const stepLis = STEPS.map((s, i) => { const li = document.createElement('li'); li.innerHTML = '<i>' + String(i + 1).padStart(2, '0') + '</i><span>' + s + '</span>'; if (stepList) stepList.appendChild(li); return li; });
 
   const up = sec.dataset.up || '';
-  const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = up + src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  const load = src => new Promise((ok, no) => {   // shared with the explorer: never load the same script twice
+    const u = up + src, o = [...document.scripts].find(x => x.getAttribute('src') === u);
+    if (o) { if (o.dataset.ok) ok(); else { o.addEventListener('load', ok); o.addEventListener('error', no); } return; }
+    const s = document.createElement('script'); s.src = u; s.onload = () => { s.dataset.ok = 1; ok(); }; s.onerror = no; document.head.appendChild(s); });
   let started = false;
   const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(() => sec.classList.add('failed')); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
