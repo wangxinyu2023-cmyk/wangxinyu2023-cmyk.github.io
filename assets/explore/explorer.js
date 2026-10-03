@@ -6,14 +6,14 @@
 // Each project supplies an adapter (assets/explore/<slug>.js) that calls XP.register(slug, ctx => spec) and turns its model
 // data into meshes. URL parameters force a state (for screenshots / links):
 //   ?view=plan|axon|eye  &section=x:0.4|y:0.5|z:0.3|plan:1  &flip=1  &sun=2026-07-21T14:00|off  &paths=1  &t=12
-//   &layout=market|daily  &shade=1  &tab=section|sun|paths  &trails=0  &speed=2  &yaw=..&pitch=..&zoom=..  &gizmo=0
+//   &layout=market|daily  &shade=1  &tab=section|sun|paths  &trails=0  &speed=2  &yaw=..&pitch=..&zoom=..  &gizmo=0  &live=1
 (() => {
   if (window.XP) return;
   const ADAPTERS = {};
   const XP = window.XP = { register: (name, fn) => { ADAPTERS[name] = fn; }, util: {} };
   const blocks = [...document.querySelectorAll('[data-explorer]')];
   if (!blocks.length) return;
-  const Q = new URLSearchParams(location.search), forced = [...Q.keys()].some(k => /^(view|section|sun|paths|t|layout|shade|tab|yaw|pitch|zoom)$/.test(k));
+  const Q = new URLSearchParams(location.search), forced = [...Q.keys()].some(k => /^(view|section|sun|live|paths|t|layout|shade|tab|yaw|pitch|zoom)$/.test(k));
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hasGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
 
@@ -80,6 +80,13 @@
     if (m === 2) { const s = nthSunday(y, 2, 2); return d > s || (d === s && min >= 120); }
     const s = nthSunday(y, 10, 1); return d < s || (d === s && min < 120);
   };
+  const daysInYear = y => new Date(Date.UTC(y, 1, 29)).getUTCMonth() === 1 ? 366 : 365;
+  const nyClock = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short' });
+  function newYorkTime(ms) {
+    const p = Object.fromEntries(nyClock.formatToParts(ms).map(p => [p.type, p.value]));
+    const year = +p.year, doy = Math.round((Date.UTC(year, +p.month - 1, +p.day) - Date.UTC(year, 0, 1)) / 864e5) + 1;
+    return { year, doy, min: +p.hour * 60 + +p.minute, zone: p.timeZoneName };
+  }
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const MONL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const hhmm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
@@ -249,10 +256,10 @@
     // -------------------------------------------------- state
     const S = {
       section: { on: false, axis: 'x', pos: .5, flip: false },
-      sun: { on: true, year: 2026, doy: 202, min: 14 * 60, path: true, shade: false, play: false },
+      sun: { on: true, year: 2026, doy: 202, min: 14 * 60, path: true, shade: false, play: false, live: false, liveMs: null, frozenMs: null, zone: null },
       paths: { on: !!spec.paths, play: !reduce, speed: 1, trails: true, t: 0 },
       layout: spec.layouts ? spec.layouts.value : null,
-      tab: tools[0]
+      tab: el.dataset.defaultTab || tools[0]
     };
     const dsun = el.dataset.date;
     const parseSun = s => { const m = /^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(s || ''); if (!m) return null; return { y: +m[1], doy: doyOf(+m[1], +m[2] - 1, +m[3]), min: m[4] ? +m[4] * 60 + +m[5] : null }; };
@@ -273,6 +280,7 @@
     if (Q.get('shade') === '1') S.sun.shade = true;
     if (Q.get('gizmo') === '0') S.sun.path = false;
     if (Q.get('tab')) S.tab = Q.get('tab');
+    if (Q.get('live') === '1') { S.sun.live = true; S.sun.on = true; }
     if (forced && Q.get('t') === null) S.paths.play = false;
 
     // -------------------------------------------------- cameras + orbit controller
@@ -513,7 +521,7 @@
         gizmo.visible = false; stage.style.removeProperty('--xp-sky'); stage.classList.remove('xp-night'); shadeOverlay && (shadeOverlay.visible = false);
         hudSun(); invalidate(); return;
       }
-      const ms = utcOf(s.year, s.doy, s.min); sol = solar(ms, lat, lon);
+      const ms = s.live ? s.liveMs : (s.frozenMs ?? utcOf(s.year, s.doy, s.min)); sol = solar(ms, lat, lon);
       const alt = sol.alt, dir = sunVec(Math.max(alt, .5), sol.az);
       const day = sstep(-2, 4, alt), low = 1 - sstep(4, 28, alt);
       sun.castShadow = alt > -1;
@@ -556,10 +564,12 @@
       shadowDirty = true; shadeDirty = true; hudSun(); invalidate();
     }
     function hudSun() {
-      const s = S.sun, { m, d } = dateOf(s.year, s.doy);
+      const s = S.sun, { m, d } = dateOf(s.year, s.doy), zone = s.live || s.frozenMs !== null ? s.zone : tzOf(s.year, s.doy, s.min);
       if (ui.sunDate) {
-        ui.sunDate.value = s.doy; ui.dateOut.textContent = d + ' ' + MON[m]; ui.sunDate.setAttribute('aria-valuetext', d + ' ' + MONL[m]);
-        ui.sunTime.value = s.min; ui.timeOut.textContent = hhmm(s.min) + ' ' + tzOf(s.year, s.doy, s.min); ui.sunTime.setAttribute('aria-valuetext', ui.timeOut.textContent);
+        ui.sunDate.max = daysInYear(s.year); ui.sunDate.value = s.doy; ui.dateOut.textContent = d + ' ' + MON[m] + ' ' + s.year; ui.sunDate.setAttribute('aria-valuetext', d + ' ' + MONL[m] + ' ' + s.year);
+        ui.sunTime.value = s.min; ui.timeOut.textContent = hhmm(s.min) + ' ' + zone; ui.sunTime.setAttribute('aria-valuetext', ui.timeOut.textContent);
+        ui.sunLive.setAttribute('aria-pressed', s.live);
+        ui.sunStatus.textContent = s.live ? 'Live New York time · updates every minute' : s.play ? 'Playing a day · New York time' : 'Drag the time slider to move the shadows.';
         ui.sunSw.setAttribute('aria-checked', s.on); panel.classList.toggle('xp-sun-on', s.on);
         if (sol) {
           ui.rAlt.textContent = sol.alt.toFixed(1) + '°'; ui.rAz.textContent = Math.round(sol.az) + '° ' + compass(sol.az);
@@ -568,7 +578,7 @@
         if (ui.sunPlay) ui.sunPlay.setAttribute('aria-pressed', s.play), ui.sunPlay.textContent = s.play ? 'Pause day' : 'Play day';
       }
       let h = '';
-      if (s.on && sol) h += '<span><b>' + d + ' ' + MON[m] + ' &middot; ' + hhmm(s.min) + ' ' + tzOf(s.year, s.doy, s.min) + '</b>' +
+      if (s.on && sol) h += '<span><b>' + (s.live ? 'Live &middot; ' : '') + d + ' ' + MON[m] + ' &middot; ' + hhmm(s.min) + ' ' + zone + '</b>' +
         (sol.alt > 0 ? 'Sun ' + sol.alt.toFixed(0) + '° high, ' + compass(sol.az) : sol.alt > -6 ? 'Twilight' : 'Night') + '</span>';
       if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun' + (spec.shade.compare && shadeVal2 !== null ? ' &middot; ' + Math.round(shadeVal2 * 100) + '% ' + spec.shade.compare.label : '') + '</span>';
       hud.innerHTML = h;
@@ -759,10 +769,11 @@
       '<div class="xp-row"><span class="label">Plan cut ' + fmtLen(cutH) + ' above</span><div class="xp-chips">' + levels.map((l, i) => '<button type="button" class="xp-chip" data-level="' + i + '">' + l.name + '</button>').join('') + '</div></div>' +
       '<div class="xp-row"><div class="xp-chips"><button type="button" class="xp-chip" data-act="flip">Flip side</button></div></div>' +
       '<p class="xp-note">Cut solids are filled dark. Drag the orange handle in the model to slide the cut.</p></div>';
-    if (tools.includes('sun')) html += '<div class="xp-pane" role="tabpanel" id="' + uid + '-p-sun" aria-labelledby="' + uid + '-t-sun">' + sw('Sun and shadows', uid + 'sun') +
+    if (tools.includes('sun')) html += '<div class="xp-pane" role="tabpanel" id="' + uid + '-p-sun" aria-labelledby="' + uid + '-t-sun">' + sw('Real-time sun rendering', uid + 'sun') +
       '<div class="xp-row"><label class="label" for="' + uid + '-sd">Date <output></output></label><input id="' + uid + '-sd" class="xp-range" type="range" min="1" max="365" step="1"></div>' +
-      '<div class="xp-row"><label class="label" for="' + uid + '-st">Time <output></output></label><input id="' + uid + '-st" class="xp-range" type="range" min="0" max="1435" step="5"></div>' +
-      '<div class="xp-chips"><button type="button" class="xp-chip" data-q="06-21">21 Jun</button><button type="button" class="xp-chip" data-q="07-21T14:00">21 Jul 14:00</button><button type="button" class="xp-chip" data-q="09-23">23 Sep</button><button type="button" class="xp-chip" data-q="12-21">21 Dec</button><button type="button" class="xp-chip" data-q="now">Now</button><button type="button" class="xp-chip xp-play" data-act="day" aria-pressed="false">Play day</button></div>' +
+      '<div class="xp-row"><label class="label" for="' + uid + '-st">Time <output></output></label><input id="' + uid + '-st" class="xp-range" type="range" min="0" max="1439" step="1"></div>' +
+      '<div class="xp-chips"><button type="button" class="xp-chip" data-q="06-21">21 Jun</button><button type="button" class="xp-chip" data-q="07-21T14:00">21 Jul 14:00</button><button type="button" class="xp-chip" data-q="09-05T16:00">5 Sep 16:00</button><button type="button" class="xp-chip" data-q="12-21">21 Dec</button><button type="button" class="xp-chip" data-q="now" aria-pressed="false">Live now</button><button type="button" class="xp-chip xp-play" data-act="day" aria-pressed="false">Play day</button></div>' +
+      '<p class="xp-note" data-sun-status></p>' +
       '<dl class="xp-read"><div><dt>Altitude</dt><dd data-r="alt"></dd></div><div><dt>Azimuth</dt><dd data-r="az"></dd></div><div><dt>Sunrise</dt><dd data-r="rise"></dd></div><div><dt>Sunset</dt><dd data-r="set"></dd></div></dl>' +
       '<div class="xp-row"><span class="label">Render quality</span><div class="xp-seg" role="radiogroup" aria-label="Render quality"><button type="button" role="radio" data-q2="high">High</button><button type="button" role="radio" data-q2="low">Low (mobile)</button></div></div>' +
       '<div class="xp-row xp-checks"><label><input type="checkbox" data-ck="path"> Sun path</label>' + (spec.shade ? '<label><input type="checkbox" data-ck="shade"> Shade map</label>' : '') + '</div>' +
@@ -801,19 +812,19 @@
       ui.sunSw = $('[data-sw="' + uid + 'sun"]'); ui.sunDate = $('#' + uid + '-sd'); ui.sunTime = $('#' + uid + '-st');
       ui.dateOut = ui.sunDate.previousElementSibling.querySelector('output'); ui.timeOut = ui.sunTime.previousElementSibling.querySelector('output');
       ui.rAlt = $('[data-r=alt]'); ui.rAz = $('[data-r=az]'); ui.rRise = $('[data-r=rise]'); ui.rSet = $('[data-r=set]'); ui.sunPlay = $('[data-act=day]');
-      ui.sunSw.addEventListener('click', () => { S.sun.on = !S.sun.on; updateSun(); });
-      ui.sunDate.addEventListener('input', () => { S.sun.on = true; S.sun.doy = +ui.sunDate.value; updateSun(); });
-      ui.sunTime.addEventListener('input', () => { S.sun.on = true; S.sun.min = +ui.sunTime.value; updateSun(); });
+      ui.sunLive = $('[data-q=now]'); ui.sunStatus = $('[data-sun-status]');
+      const manualSun = () => { S.sun.live = false; S.sun.play = false; S.sun.frozenMs = null; };
+      ui.sunSw.addEventListener('click', () => { S.sun.on = !S.sun.on; if (!S.sun.on) manualSun(); updateSun(); });
+      ui.sunDate.addEventListener('input', () => { manualSun(); S.sun.on = true; S.sun.doy = +ui.sunDate.value; updateSun(); });
+      ui.sunTime.addEventListener('input', () => { manualSun(); S.sun.on = true; S.sun.min = +ui.sunTime.value; updateSun(); });
       $$('[data-q]').forEach(b => b.addEventListener('click', () => {
         S.sun.on = true; S.sun.play = false;
-        if (b.dataset.q === 'now') { const n = new Date(), u = n.getTime(); S.sun.year = n.getUTCFullYear(); let lm, doy;
-          for (const off of [-4, -5]) { const l = new Date(u + off * 36e5); doy = doyOf(l.getUTCFullYear(), l.getUTCMonth(), l.getUTCDate()); lm = l.getUTCHours() * 60 + l.getUTCMinutes(); if ((off === -4) === isDST(l.getUTCFullYear(), l.getUTCMonth(), l.getUTCDate(), lm)) break; }
-          S.sun.doy = doy; S.sun.min = lm; }
-        else { const m = /(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(b.dataset.q); S.sun.doy = doyOf(S.sun.year, +m[1] - 1, +m[2]); if (m[3]) S.sun.min = +m[3] * 60 + +m[4]; }
+        if (b.dataset.q === 'now') { S.sun.live = !S.sun.live; S.sun.frozenMs = S.sun.live ? null : S.sun.liveMs; if (S.sun.live) syncLiveSun(true); }
+        else { manualSun(); const m = /(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(b.dataset.q); S.sun.doy = doyOf(S.sun.year, +m[1] - 1, +m[2]); if (m[3]) S.sun.min = +m[3] * 60 + +m[4]; }
         updateSun();
       }));
-      ui.sunPlay.addEventListener('click', () => { S.sun.play = !S.sun.play; S.sun.on = true; if (S.sun.play && (S.sun.min > 20.5 * 60 || S.sun.min < 300)) S.sun.min = 330; updateSun(); invalidate(); });
-      ui.qual = $$('[data-q2]'); ui.qual.forEach(b => b.addEventListener('click', () => setQuality(b.dataset.q2 === 'high')));
+      ui.sunPlay.addEventListener('click', () => { S.sun.live = false; S.sun.frozenMs = null; S.sun.play = !S.sun.play; S.sun.on = true; if (S.sun.play && (S.sun.min > 20.5 * 60 || S.sun.min < 300)) S.sun.min = 330; updateSun(); invalidate(); });
+      ui.qual = $$('[data-q2]'); ui.qual.forEach(b => b.addEventListener('click', () => { setQuality(b.dataset.q2 === 'high'); updateSun(); }));
       const ckP = $('[data-ck=path]'); ckP.checked = S.sun.path; ckP.addEventListener('change', () => { S.sun.path = ckP.checked; updateSun(); });
       const ckS = $('[data-ck=shade]');
       if (ckS) { ckS.checked = S.sun.shade; ckS.addEventListener('change', () => { S.sun.shade = ckS.checked; if (S.sun.shade && !S.sun.on) S.sun.on = true; shadeDirty = true; updateSun(); }); }
@@ -836,6 +847,13 @@
 
     // -------------------------------------------------- render loop (only while visible and something changes)
     let raf = 0, visible = true, dirty = true, last = performance.now();
+    function syncLiveSun(force = false) {
+      const s = S.sun, ms = Date.now();
+      if (!s.live || !s.on || (!force && (!visible || document.hidden))) return;
+      if (!force && Math.floor(ms / 6e4) === Math.floor(s.liveMs / 6e4)) return;
+      Object.assign(s, newYorkTime(ms), { liveMs: ms });
+      updateSun();
+    }
     function invalidate() { dirty = true; schedule(); }
     function schedule() { if (!raf && visible) raf = requestAnimationFrame(loop); }
     function size() { Wd = Math.max(1, stage.clientWidth); Hd = Math.max(1, stage.clientHeight); renderer.setSize(Wd, Hd, false); applyCam(); invalidate(); }
@@ -872,8 +890,12 @@
       northSvg.style.transform = 'rotate(' + deg(ang).toFixed(1) + 'deg)';
       northEl.style.opacity = C.pitch > .2 || C.mode === 'plan' ? 1 : .35;
     }
-    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) { last = performance.now(); schedule(); } }, { rootMargin: '100px 0px' }).observe(stage);
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) { last = performance.now(); syncLiveSun(true); schedule(); } }, { rootMargin: '100px 0px' }).observe(stage);
     if (window.ResizeObserver) new ResizeObserver(size).observe(stage); else addEventListener('resize', size);
+    // Minute-level clock updates avoid continuously rendering an idle scene.
+    const liveTimer = setInterval(() => { if (!el.isConnected) clearInterval(liveTimer); else syncLiveSun(); }, 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && visible) syncLiveSun(true); });
+    addEventListener('pageshow', () => syncLiveSun(true));
 
     // -------------------------------------------------- initial state
     Wd = Math.max(1, stage.clientWidth); Hd = Math.max(1, stage.clientHeight); renderer.setSize(Wd, Hd, false);
@@ -881,7 +903,7 @@
     showTab(S.tab);
     setSection({});
     if (S.section.level !== undefined) planAt(S.section.level);
-    updateSun();
+    if (S.sun.live) syncLiveSun(true); else updateSun();
     updatePaths();
     const v0 = Q.get('view') || (S.section.on && S.section.axis === 'z' && Q.get('section') ? 'plan' : 'axon');
     setView(v0 === 'eye' && !spec.eye ? 'axon' : v0);
