@@ -101,7 +101,7 @@
     const go = () => {
       if (started) return; started = true;
       load(up + 'assets/vendor/three.min.js').then(() => load(up + el.dataset.model)).then(() => load(up + el.dataset.adapter))
-        .then(() => { const name = el.dataset.adapter.split('/').pop().replace(/\.js$/, ''); setup(el, ADAPTERS[name]); })
+        .then(() => { const name = el.dataset.adapter.split('?')[0].split('/').pop().replace(/\.js$/, ''); setup(el, ADAPTERS[name]); })
         .catch(e => { console.error(e); wait.textContent = 'The 3D model could not be loaded.'; });
     };
     if (forced) go();
@@ -122,6 +122,17 @@
     renderer.setClearColor(0x000000, 0);
     stage.prepend(renderer.domElement);
     renderer.domElement.setAttribute('aria-hidden', 'true');
+    // If the GPU is busy (e.g. another app holds most of the video memory) the browser can drop the WebGL context:
+    // the panel kept updating while the picture froze. Show it, then come back on Low quality when the context returns.
+    const gpuNote = document.createElement('div'); gpuNote.className = 'xp-gpu-note'; gpuNote.hidden = true;
+    gpuNote.textContent = 'The graphics card is busy, so the 3D view paused. It will resume on Low quality; close other 3D apps for High.';
+    stage.appendChild(gpuNote);
+    renderer.domElement.addEventListener('webglcontextlost', e => { e.preventDefault(); gpuNote.hidden = false; }, false);
+    renderer.domElement.addEventListener('webglcontextrestored', () => {
+      gpuNote.hidden = true;
+      try { setQuality(false); shadowDirty = true; shadeDirty = true; } catch (e) {}
+      invalidate();
+    }, false);
     const scene = new T.Scene();
     const hemi = new T.HemisphereLight(0xffffff, 0xd9d2c5, 1.35); scene.add(hemi);
     const sun = new T.DirectionalLight(0xfff6ea, 2.2);
@@ -855,14 +866,22 @@
       updateSun();
     }
     function invalidate() { dirty = true; schedule(); }
-    function schedule() { if (!raf && visible) raf = requestAnimationFrame(loop); }
+    function onScreen() { const r = stage.getBoundingClientRect(); return r.bottom > -100 && r.top < innerHeight + 100 && r.width > 0; }
+    function schedule() { if (!visible && onScreen()) visible = true; if (!raf && visible) raf = requestAnimationFrame(loop); }
     function size() { Wd = Math.max(1, stage.clientWidth); Hd = Math.max(1, stage.clientHeight); renderer.setSize(Wd, Hd, false); applyCam(); invalidate(); }
     function loop(now) {
       raf = 0; const dt = Math.min(.1, (now - last) / 1000); last = now;
       let anim = false;
       if (S.paths.on && S.paths.play && spec.paths) { S.paths.t += dt * S.paths.speed; anim = true; dirty = true; }
       if (S.sun.play && S.sun.on) { S.sun.min += dt * 50; if (S.sun.min > 21 * 60) S.sun.min = 330; updateSun(); anim = true; }
-      if (dirty) render();
+      if (dirty) {
+        try { render(); }
+        catch (err) {          // a failed frame must not freeze the view: fall back to Low quality once and retry
+          console.error('[explorer] render failed', err);
+          if (look.high) { setQuality(false); shadowDirty = true; try { render(); } catch (e2) { gpuNote.hidden = false; } }
+          else gpuNote.hidden = false;
+        }
+      }
       if (anim) schedule();
     }
     function render() {
@@ -890,7 +909,9 @@
       northSvg.style.transform = 'rotate(' + deg(ang).toFixed(1) + 'deg)';
       northEl.style.opacity = C.pitch > .2 || C.mode === 'plan' ? 1 : .35;
     }
-    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) { last = performance.now(); syncLiveSun(true); schedule(); } }, { rootMargin: '100px 0px' }).observe(stage);
+    // use the LATEST entry: after a hash jump / layout shift one batch can hold both 'left' and 'entered' for the stage,
+    // and reading es[0] left the view frozen while the panel kept updating
+    new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; if (visible) { last = performance.now(); syncLiveSun(true); schedule(); } }, { rootMargin: '100px 0px' }).observe(stage);
     if (window.ResizeObserver) new ResizeObserver(size).observe(stage); else addEventListener('resize', size);
     // Minute-level clock updates avoid continuously rendering an idle scene.
     const liveTimer = setInterval(() => { if (!el.isConnected) clearInterval(liveTimer); else syncLiveSun(); }, 1000);
