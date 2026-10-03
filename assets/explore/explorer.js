@@ -317,8 +317,17 @@
       C.target.copy(fctr); applyCam();
       const right = new V3().setFromMatrixColumn(cam.matrixWorld, 0), upv = new V3().setFromMatrixColumn(cam.matrixWorld, 1);
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-      for (let i = 0; i < 8; i++) {
-        const c = new V3(i & 1 ? fbox.max.x : fbox.min.x, i & 2 ? fbox.max.y : fbox.min.y, i & 4 ? fbox.max.z : fbox.min.z).sub(fctr);
+      const pts = [];
+      for (let i = 0; i < 8; i++) pts.push(new V3(i & 1 ? fbox.max.x : fbox.min.x, i & 2 ? fbox.max.y : fbox.min.y, i & 4 ? fbox.max.z : fbox.min.z));
+      // in axon, keep the whole sun-path dome in frame when it is shown (it now wraps the building, so it is bigger)
+      try {
+        if (C.mode === 'axon' && S.sun.on && S.sun.path)
+          for (let k = 0; k < 24; k++) { const a = k / 24 * 6.2832;
+            pts.push(new V3(gizmo.position.x + Math.cos(a) * gR, gizmo.position.y, gizmo.position.z + Math.sin(a) * gR));
+            pts.push(new V3(gizmo.position.x + Math.cos(a) * gR * .7, gizmo.position.y + gR * .71, gizmo.position.z + Math.sin(a) * gR * .7)); }
+      } catch (e) { /* gizmo not built yet */ }
+      for (const p of pts) {
+        const c = p.clone().sub(fctr);
         const a = c.dot(right), b = c.dot(upv); x0 = Math.min(x0, a); x1 = Math.max(x1, a); y0 = Math.min(y0, b); y1 = Math.max(y1, b);
       }
       const asp = Wd / Hd, half = Math.max((y1 - y0) / 2, (x1 - x0) / 2 / asp) * pad;
@@ -471,7 +480,9 @@
 
     // -------------------------------------------------- sun, sky, gizmo
     const gizmo = new T.Group(); scene.add(gizmo);
-    const gR = Math.max(fsize.x, fsize.z) * .5 * (spec.gizmoScale || .95);
+    // sun-path dome sized to ENCLOSE the building body (focus box): every point of the hemisphere lies outside the box,
+    // so the path never cuts through the walls; it is also drawn on top (no depth test) so neighbours can't hide it.
+    const gR = Math.hypot(fsize.x / 2, fsize.z / 2, Math.max(0, F[5] - (spec.ground !== undefined ? spec.ground : F[2]))) * (spec.gizmoPad || 1.12);
     const gC = new V3(fctr.x, groundY, fctr.z);
     const dashMat = new T.LineDashedMaterial({ color: 0xb07a3a, dashSize: gR * .03, gapSize: gR * .02, transparent: true, opacity: .85 });
     const ring = new T.LineLoop(new T.BufferGeometry().setFromPoints([...Array(96)].map((_, i) => new V3(Math.cos(i / 96 * 6.2832) * gR, 0, Math.sin(i / 96 * 6.2832) * gR))),
@@ -492,7 +503,7 @@
     gizmo.add(hourDots);
     const sunBall = new T.Mesh(new T.SphereGeometry(gR * .035, 20, 14), new T.MeshBasicMaterial({ color: 0xf2b441 })); gizmo.add(sunBall);
     const sunRay = new T.Line(new T.BufferGeometry().setFromPoints([new V3(), new V3()]), new T.LineBasicMaterial({ color: 0xf2b441, transparent: true, opacity: .55 })); gizmo.add(sunRay);
-    gizmo.position.copy(gC); gizmo.traverse(o => { o.userData.noClip = true; });
+    gizmo.position.copy(gC); gizmo.traverse(o => { o.userData.noClip = true; if (o.material && !o.isSprite) { o.material.depthTest = false; o.material.depthWrite = false; o.material.transparent = true; o.renderOrder = 6; } });
 
     const sunVec = (alt, az) => {   // world unit vector towards the sun
       const a = rad(alt), z = rad(az), t = rad(north), e = Math.sin(z) * Math.cos(a), n = Math.cos(z) * Math.cos(a);
