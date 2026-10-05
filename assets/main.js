@@ -11,15 +11,7 @@
     im.complete ? done() : im.addEventListener('load', done, { once: true });
   });
 
-  // home hero: slow cross-fade between project heroes
-  const hero = document.querySelector('[data-slides]');
-  if (hero && !reduce) {
-    const sl = hero.querySelectorAll('.slide'), cp = hero.querySelectorAll('.cap'); let k = 0;
-    if (sl.length > 1) setInterval(() => {
-      sl[k].classList.remove('on'); cp[k].classList.remove('on');
-      k = (k + 1) % sl.length; sl[k].classList.add('on'); cp[k].classList.add('on');
-    }, 6000);
-  }
+  // home hero slideshow lives in fx.js (progress bars, pause on hover)
 
   // category filter on the home page
   document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
