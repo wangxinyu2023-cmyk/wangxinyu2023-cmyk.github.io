@@ -270,6 +270,7 @@
       sun: { on: true, year: 2026, doy: 202, min: 14 * 60, path: true, shade: false, play: false, live: false, liveMs: null, frozenMs: null, zone: null },
       paths: { on: !!spec.paths, play: !reduce, speed: 1, trails: true, t: 0 },
       layout: spec.layouts ? spec.layouts.value : null,
+      canopy: { show: true, dep: 1, target: 1 },
       tab: el.dataset.defaultTab || tools[0]
     };
     const dsun = el.dataset.date;
@@ -289,6 +290,8 @@
     if (Q.get('trails') === '0') S.paths.trails = false;
     if (Q.get('layout') && spec.layouts) S.layout = Q.get('layout');
     if (Q.get('shade') === '1') S.sun.shade = true;
+    if (Q.get('canopy') === '0') S.canopy.show = false;
+    if (Q.get('fold') !== null && spec.deploy) S.canopy.dep = S.canopy.target = clamp(1 - +Q.get('fold'), 0, 1);
     if (Q.get('gizmo') === '0') S.sun.path = false;
     if (Q.get('tab')) S.tab = Q.get('tab');
     if (Q.get('live') === '1') { S.sun.live = true; S.sun.on = true; }
@@ -602,7 +605,7 @@
       let h = '';
       if (s.on && sol) h += '<span><b>' + (s.live ? 'Live &middot; ' : '') + d + ' ' + MON[m] + ' &middot; ' + hhmm(s.min) + ' ' + zone + '</b>' +
         (sol.alt > 0 ? 'Sun ' + sol.alt.toFixed(0) + '° high, ' + compass(sol.az) : sol.alt > -6 ? 'Twilight' : 'Night') + '</span>';
-      if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun' + (spec.shade.compare && shadeVal2 !== null ? ' &middot; ' + Math.round(shadeVal2 * 100) + '% ' + spec.shade.compare.label : '') + '</span>';
+      if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun' + (S.canopy.show ? '' : ' with no canopies') + (spec.shade.compare && shadeVal2 !== null ? ' &middot; ' + Math.round(shadeVal2 * 100) + '% ' + (S.canopy.show ? spec.shade.compare.label : (spec.shade.compare.labelOn || 'with them')) : '') + '</span>';
       hud.innerHTML = h;
       markTabs();
     }
@@ -649,7 +652,7 @@
       };
       if (cut) { plane.set(new V3(-1, 0, 0), 1e6); refresh(); }
       shadeVal = probe(true);
-      if (cmp) { cmp.hide(true); refresh(); shadeVal2 = probe(false); cmp.hide(false); }
+      if (cmp) { const off = !S.canopy.show; cmp.hide(!off); refresh(); shadeVal2 = probe(false); cmp.hide(off); }   // the comparison is always the other state
       if (cut) plane.copy(saved);
       if (cut || cmp) shadowDirty = true;
       hudSun();
@@ -782,6 +785,10 @@
     const uid = 'xp' + Math.random().toString(36).slice(2, 7);
     let html = '';
     if (spec.layouts) html += '<div class="xp-row xp-mode"><span class="label">Mode</span><div class="xp-seg" role="radiogroup" aria-label="Layout">' + spec.layouts.options.map(o => '<button type="button" role="radio" data-layout="' + o[0] + '">' + o[1] + '</button>').join('') + '</div></div>';
+    const cmpSpec = spec.shade && spec.shade.compare, cnp = spec.canopy;
+    if (cnp && (cmpSpec || spec.deploy)) html += '<div class="xp-row xp-mode xp-canopy"><span class="label">' + cnp.label + '</span>' +
+      (cmpSpec ? '<div class="xp-seg" role="radiogroup" aria-label="' + cnp.label + '"><button type="button" role="radio" data-can="1">' + cnp.on + '</button><button type="button" role="radio" data-can="0">' + cnp.off + '</button></div>' : '') +
+      (spec.deploy ? '<div class="xp-chips" style="margin-top:8px"><button type="button" class="xp-chip xp-play" data-act="fold" aria-pressed="false">' + spec.deploy.fold + '</button></div>' : '') + '</div>';
     const NAMES = { section: 'Section', sun: 'Sun', paths: 'Movement' };
     html += '<div class="xp-tabs" role="tablist" aria-label="Tools">' + tools.map(t => '<button type="button" role="tab" id="' + uid + '-t-' + t + '" aria-controls="' + uid + '-p-' + t + '" data-tab="' + t + '">' + NAMES[t] + '<i class="xp-dot"></i></button>').join('') +
       '<button type="button" class="xp-fold" aria-expanded="true" aria-label="Show or hide controls">&#9662;</button></div>';
@@ -820,6 +827,29 @@
       P.scen = null; shadowDirty = shadeDirty = true; if (aoMesh) aoMesh.userData.draw(); updatePaths(); invalidate();
     }
     layBtns.forEach(b => b.addEventListener('click', () => setLayout(b.dataset.layout)));
+    // canopy: with / without (the same scene, canopies hidden) and an animated fold / unfold of every cart
+    const canBtns = $$('[data-can]'), foldBtn = $('[data-act=fold]');
+    function syncCanopy() {
+      canBtns.forEach(b => b.setAttribute('aria-checked', (b.dataset.can === '1') === S.canopy.show));
+      if (foldBtn) {
+        const c = S.canopy, moving = c.dep !== c.target;
+        foldBtn.textContent = moving ? (c.target > c.dep ? 'Unfolding ' : 'Folding ') + Math.round(c.dep * 100) + '% · stop' : (c.dep < .5 ? spec.deploy.unfold : spec.deploy.fold);
+        foldBtn.setAttribute('aria-pressed', moving);
+      }
+    }
+    function setCanopy(show) {
+      S.canopy.show = show; if (cmpSpec) cmpSpec.hide(!show);
+      if (aoMesh) aoMesh.userData.draw();
+      shadowDirty = shadeDirty = true; syncCanopy(); hudSun(); invalidate();
+    }
+    canBtns.forEach(b => b.addEventListener('click', () => setCanopy(b.dataset.can === '1')));
+    if (foldBtn) foldBtn.addEventListener('click', () => {
+      const c = S.canopy;
+      if (!c.show) setCanopy(true);
+      c.target = c.dep !== c.target ? c.dep : (c.dep < .5 ? 1 : 0);      // a second press while moving stops it
+      if (reduce && c.target !== c.dep) { c.dep = c.target; spec.deploy.set(c.dep); shadowDirty = shadeDirty = true; }
+      syncCanopy(); invalidate();
+    });
     // section controls
     if (tools.includes('section')) {
       ui.secSw = $('[data-sw="' + uid + 'sec"]'); ui.secAxis = $$('[data-axis]'); ui.secPos = $('#' + uid + '-sp'); ui.secOut = ui.secPos.previousElementSibling.querySelector('output');
@@ -885,6 +915,12 @@
       let anim = false;
       if (S.paths.on && S.paths.play && spec.paths) { S.paths.t += dt * S.paths.speed; anim = true; dirty = true; }
       if (S.sun.play && S.sun.on) { S.sun.min += dt * 50; if (S.sun.min > 21 * 60) S.sun.min = 330; updateSun(); anim = true; }
+      if (spec.deploy && S.canopy.dep !== S.canopy.target) {
+        const c = S.canopy, st = dt / (spec.deploy.seconds || 6);
+        c.dep = c.target > c.dep ? Math.min(c.target, c.dep + st) : Math.max(c.target, c.dep - st);
+        spec.deploy.set(c.dep); shadowDirty = shadeDirty = true; dirty = true; anim = true; syncCanopy();
+        if (aoMesh && (Math.abs(c.dep - (c.aoAt ?? 1)) > .08 || c.dep === c.target)) { c.aoAt = c.dep; aoMesh.userData.draw(); }
+      }
       if (dirty) {
         try { render(); }
         catch (err) {          // a failed frame must not freeze the view: fall back to Low quality once and retry
@@ -932,6 +968,9 @@
     // -------------------------------------------------- initial state
     Wd = Math.max(1, stage.clientWidth); Hd = Math.max(1, stage.clientHeight); renderer.setSize(Wd, Hd, false);
     if (spec.layouts) setLayout(S.layout); else if (aoMesh) aoMesh.userData.draw();
+    if (spec.deploy && S.canopy.dep !== 1) spec.deploy.set(S.canopy.dep);
+    if (cmpSpec && !S.canopy.show) cmpSpec.hide(true);
+    syncCanopy();
     showTab(S.tab);
     setSection({});
     if (S.section.level !== undefined) planAt(S.section.level);

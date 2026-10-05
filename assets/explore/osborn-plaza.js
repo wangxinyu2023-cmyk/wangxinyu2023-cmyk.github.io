@@ -189,27 +189,35 @@ XP.register('osborn-plaza', ({ T, util }) => {
     }
     return out;
   };
-  const pose = (out, ci, d, t) => {   // deployed (d=1); t = 1 table, 0 seat
+  const tS = new T.Matrix4(), tT = new T.Matrix4();
+  // pose of cluster ci for deployment d (0 folded on its casters .. 1 open) and table t (0 seat .. 1 table); same staging as the scroll animation
+  const pose = (out, ci, d, t) => {
     const c = U.clusters[ci]; out.identity();
-    if (c.k === 'skin') return true;
-    if (c.k === 'roll') return false;
-    if (c.k === 'ballast') return true;
-    applyOps(out, c.tr, s => 1 - sp(s, d)); applyOps(out, c.tb, s => sp(s, t)); return true;
+    if (c.k === 'skin') { const s = sp('skin', d); if (s < .01) return false; out.makeTranslation(0, c.py, 0).multiply(tS.makeScale(1, s, 1)).multiply(tT.makeTranslation(0, -c.py, 0)); return true; }
+    if (c.k === 'roll') {
+      const s = 1 - sp('skin', d); if (s < .01) return false;
+      const cx = (c.lo[0] + c.hi[0]) / 2, cy = (c.lo[1] + c.hi[1]) / 2, cz = (c.lo[2] + c.hi[2]) / 2;
+      out.makeTranslation(cx, cy, cz).multiply(tS.makeScale(s, 1, 1)).multiply(tT.makeTranslation(-cx, -cy, -cz)); return true;
+    }
+    if (c.k === 'ballast') { const s = sp('ballast', d); if (s <= 0) return false; const e = 1 - s; out.makeTranslation(0, 0, 7 * e * e); return true; }
+    applyOps(out, c.tr, s => 1 - sp(s, d)); applyOps(out, c.tb, s => sp(s, t * d)); return true;
   };
   const HIDE = new T.Matrix4().makeScale(0, 0, 0), place = new T.Matrix4();
   const dailyOf = new Array(N).fill(null); LAY.daily.forEach(d => { dailyOf[d[0]] = d; });
+  let DEP = 1, canHidden = false;        // deployment of every cart (0 folded .. 1 open); canopies hidden for the no-canopy comparison
   function setLayout(v) {
     for (let i = 0; i < N; i++) {
       let s = null;
       if (v === 'market') { const k = LAY.market[i]; s = [k[0], k[1], k[2], 1]; }
       else if (dailyOf[i]) { const d = dailyOf[i]; s = [d[1], d[2], d[3], 0]; }
       if (s) place.makeRotationZ(s[2]).setPosition(s[0], s[1], 0);
-      umeshes.forEach(u => { const ok = s && pose(mm, u.g, 1, s[3]); if (ok) mm.premultiply(place); u.m.setMatrixAt(i, ok ? mm : HIDE); });
+      umeshes.forEach(u => { const ok = s && pose(mm, u.g, DEP, s[3]); if (ok) mm.premultiply(place); u.m.setMatrixAt(i, ok ? mm : HIDE); });
     }
-    umeshes.forEach(u => { u.m.instanceMatrix.needsUpdate = true; u.m.computeBoundingSphere && (u.m.boundingSphere = null); });
-    crateM.visible = prodM.visible = v === 'market';
+    umeshes.forEach(u => { u.m.instanceMatrix.needsUpdate = true; u.m.computeBoundingSphere && (u.m.boundingSphere = null); u.m.visible = !canHidden; });
+    crateM.visible = prodM.visible = v === 'market' && !canHidden && DEP > .97;
     layoutNow = v;
   }
+  function hideCanopies(on) { canHidden = on; umeshes.forEach(u => { u.m.visible = !on; }); crateM.visible = prodM.visible = !on && layoutNow === 'market' && DEP > .97; }
   let layoutNow = 'market', pathsOn = false;
   function showCrowds() {
     // static Rhino crowds are not used in the explorer: people are the scale figures of the Movement tool
@@ -302,16 +310,20 @@ XP.register('osborn-plaza', ({ T, util }) => {
     view: { yaw: -.55, pitch: .82, pad: .98, portrait: { yaw: -.3, pitch: .95 } },
     eye: { from: [-1.2, -34, 5.3], to: [.8, 0, 4.4], fov: 64 },
     ao: { rect: [-31, -51, 32, 51], z: .07, res: 8, blobs: lay => {     // contact shadows: under the carts and round the tree trunks
-      const out = [];
-      if (lay === 'daily') LAY.daily.forEach(d => out.push([d[1], d[2], 10.4, 8.6, d[3], .3]));
-      else LAY.market.forEach(k => out.push([k[0], k[1], 10.6, 9, k[2], .26]));
+      const out = [], f = .45 + .55 * DEP;            // folded carts have a smaller footprint; no blobs when the canopies are hidden
+      if (!canHidden) {
+        if (lay === 'daily') LAY.daily.forEach(d => out.push([d[1], d[2], 10.4 * f, 8.6 * f, d[3], .3]));
+        else LAY.market.forEach(k => out.push([k[0], k[1], 10.6 * f, 9 * f, k[2], .26]));
+      }
       (ctx.trees || []).forEach(t => { out.push([t.b[0], t.b[1], 3.2, 3.2, 0, .45], [t.b[0], t.b[1], 20, 20, 0, .1]); });
       return out; } },
     gizmoScale: .62,
     layouts: { options: [['market', 'Market day'], ['daily', 'Everyday']], value: 'market', set: setLayout },
     paths: { scenarios: { market, daily }, colors: [0xbf7352, 0x55667a, 0x7f9a5c, 0x9a7a4c] },
     casterBox: [-640, -640, -35, 640, 640, 212],
-    shade: { rect: [-29.2, -49.1, 30.4, 49.8], z: 0.12, cell: 2, label: 'Plaza floor', compare: { label: 'without the canopies', hide: on => { umeshes.forEach(u => { u.m.visible = !on; }); crateM.visible = prodM.visible = !on && layoutNow === 'market'; } } },
+    shade: { rect: [-29.2, -49.1, 30.4, 49.8], z: 0.12, cell: 2, label: 'Plaza floor', compare: { label: 'without the canopies', labelOn: 'with the canopies', hide: hideCanopies } },
+    canopy: { label: 'Canopies', on: 'With canopies', off: 'No canopies' },
+    deploy: { seconds: 7, fold: 'Fold canopies', unfold: 'Unfold canopies', set: d => { DEP = d; setLayout(layoutNow); } },
     sunNote: 'Plan north from the site survey (11° east of the model’s +Y). Neighbouring buildings within 600 ft come from the LiDAR context model; reed panels let about a third of the sun through.'
   };
 });
