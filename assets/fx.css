@@ -180,3 +180,27 @@ html.intro .pt{transform:none}
   html.js figure.reveal img,html.js .feat-pic.reveal img{transform:none}
   .pt{display:none}.cur{display:none}
 }
+
+/* ---------- deep-zoom lightbox ---------- */
+.lb{padding:0;background:#0e0e0d}
+.lb-view{position:absolute;left:0;right:0;top:64px;bottom:76px;overflow:hidden;touch-action:none;cursor:zoom-in;user-select:none}
+.lb-view.zoomed{cursor:grab}.lb-view.zoomed:active{cursor:grabbing}
+.lb .lb-view img{position:absolute;left:0;top:0;max-width:none;max-height:none;transform-origin:0 0;background:#fff;will-change:transform}
+.lb button{font-family:var(--sans);z-index:2}
+.lb-prev,.lb-next{width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,.22)!important;font-size:20px!important;display:grid;place-items:center;transition:background .3s,border-color .3s}
+.lb-prev:hover,.lb-next:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.6)!important}
+.lb-zoom{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:2px 6px;z-index:2}
+.lb-zoom button{position:static;font-size:18px;padding:6px 12px;color:#ddd}
+.lb-zoom .lb-fit{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;border-left:1px solid rgba(255,255,255,.22);margin-left:4px}
+.lb-pct{min-width:52px;text-align:center;color:#fff;font-family:var(--sans);font-size:11px;letter-spacing:.12em;font-variant-numeric:tabular-nums}
+.lb-cap{bottom:24px;align-items:baseline;font-size:12px}
+.lb-t{flex:1;color:#cfcbc2}
+.lb-hint{color:#77746c;white-space:nowrap}
+@media (max-width:900px){.lb-hint{display:none}.lb-prev,.lb-next{display:none}.lb-view{top:58px;bottom:70px}.lb-cap{left:16px;right:16px}}
+
+/* ---------- hero light: tint follows the time of day in New York, a soft "sun" follows the cursor ---------- */
+.hero-tint,.hero-sun{position:absolute;inset:0;pointer-events:none;transition:background-color 2s,opacity 1s}
+.hero-tint{mix-blend-mode:soft-light;background-color:var(--tint,transparent)}
+.hero-sun{mix-blend-mode:soft-light;opacity:0;background:radial-gradient(circle at var(--mx,70%) var(--my,30%),rgba(255,236,196,.85) 0,rgba(255,214,150,.35) 14%,rgba(255,200,140,0) 38%)}
+.hero:hover .hero-sun{opacity:1}
+.hero-phase{margin-left:10px;color:rgba(255,255,255,.7)}

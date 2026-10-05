@@ -186,8 +186,28 @@
     fit(); addEventListener('resize', fit); D.fonts && D.fonts.ready.then(fit);
   }
 
-  /* ---------- New York clock ---------- */
-  const clocks = D.querySelectorAll('[data-clock]');
+  /* ---------- hero light: New York time of day sets the tint; the cursor moves a soft sun ---------- */
+  const hl = D.querySelector('.hero');
+  if (hl && D.querySelector('.hero-tint')) {
+    const hf = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false });
+    const phases = [[0, 'Night', 'rgba(40,60,120,.55)'], [5.5, 'Dawn', 'rgba(255,170,150,.35)'], [8, 'Morning', 'rgba(255,245,225,.12)'],
+      [11, 'Midday', 'rgba(255,255,255,0)'], [15.5, 'Afternoon', 'rgba(255,200,120,.22)'], [17.5, 'Golden hour', 'rgba(255,150,60,.42)'],
+      [19.5, 'Dusk', 'rgba(120,90,160,.45)'], [21, 'Night', 'rgba(40,60,120,.55)']];
+    const ph = D.querySelector('[data-phase]');
+    const setTint = () => {
+      const [h, m] = hf.format(new Date()).split(':').map(Number), t = (h % 24) + m / 60;
+      let cur = phases[0]; phases.forEach(p => { if (t >= p[0]) cur = p; });
+      hl.style.setProperty('--tint', cur[2]); if (ph) ph.textContent = '· ' + cur[1];
+    };
+    setTint(); setInterval(setTint, 60000);
+    if (fine && !reduce) hl.addEventListener('mousemove', e => {
+      const r = hl.getBoundingClientRect();
+      hl.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+      hl.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+    }, { passive: true });
+  }
+
+  /* ---------- New York clock ---------- */  const clocks = D.querySelectorAll('[data-clock]');
   if (clocks.length) {
     const f = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false });
     const t = () => { const s = f.format(new Date()); clocks.forEach(c => { c.textContent = s; }); };
