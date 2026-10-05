@@ -133,12 +133,16 @@
             {
               "kind": "full",
               "src": "images/osborn/section-aa-market.jpg",
-              "caption": "Section A-A, farmers' market: 15 units in table mode, looking east. 1/8\" = 1'-0\"."
+              "caption": "Section A-A, farmers' market: 15 units in table mode, looking east, 1/8\" = 1'-0\". Zoom Z1 enlarges one unit at 1/2\" = 1'-0\": shoppers at the stall, the reed screen, knife-plate node, telescoping mast, lift and planted box."
             },
             {
               "kind": "full",
               "src": "images/osborn/section-aa-daily.jpg",
-              "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches. 1/8\" = 1'-0\"."
+              "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches, 1/8\" = 1'-0\". Zoom Z2 shows the same unit dropped to seat height at 1/2\" = 1'-0\", with the canopy kept at +7'-8\"."},
+            {
+              "kind": "full",
+              "src": "images/osborn/section-structure-detail.jpg",
+              "caption": "Structure in detail: the canopy knife-plate node at 1-1/2\" = 1'-0\" and the base (mast sleeve, lift track, caster, fold-out foot) at 1\" = 1'-0\", re-drawn from the same model vectors."
             },
             {
               "kind": "full",
