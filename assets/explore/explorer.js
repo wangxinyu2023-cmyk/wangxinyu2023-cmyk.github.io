@@ -106,6 +106,11 @@
     };
     if (forced) go();
     else new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '700px 0px' }).observe(el);
+    // desktop: build the scene during idle time after load (after the scroll animation's own warm-up), not mid-scroll
+    if (!forced && matchMedia('(pointer: fine)').matches && innerWidth > 900) {
+      const idle = () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 5000 }), 3500);
+      document.readyState === 'complete' ? idle() : addEventListener('load', idle, { once: true });
+    }
   });
 
   function setup(el, adapter) {

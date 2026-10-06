@@ -27,6 +27,9 @@
   let started = false;
   const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(e => { console.error(e); sec.classList.add('failed'); }); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
+  // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
+  if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
+
 
   // story beats (scroll progress p in 0..1)
   const STEPS = [[0, 'Arrives folded on its casters'], [.05, 'Outriggers swing out, planted ballast drops in'], [.13, 'Mast telescopes, bamboo wings unfold, reed skin stretches'],
@@ -41,7 +44,7 @@
     const clock = document.createElement('div'); clock.className = 'osb-clock label'; stage.appendChild(clock);
 
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.setPixelRatio(Math.min(1.5, devicePixelRatio));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
     stage.prepend(renderer.domElement);
     const scene = new T.Scene();
@@ -330,7 +333,7 @@
     }
     size(); frame();
     let raf = 0;
-    addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; frame(); }); }, { passive: true });
+    addEventListener('scroll', () => { if (raf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; raf = requestAnimationFrame(() => { raf = 0; frame(); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
     sec.classList.add('loaded');
   }

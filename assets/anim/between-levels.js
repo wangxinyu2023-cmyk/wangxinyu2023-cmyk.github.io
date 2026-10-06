@@ -49,6 +49,9 @@
   let started = false;
   const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(e => { console.error(e); sec.classList.add('failed'); }); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
+  // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
+  if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
+
 
   const TYPES = [ // prototype, legend name, colour
     ['M01', 'Repair workshop', 0xb7654b, 'Repair'], ['M02', 'Neighbourhood counter', 0xd49a58, 'Counter'], ['M03', 'Making studio', 0xc9b14f, 'Making'],
@@ -78,7 +81,7 @@
     const legLi = [...legend.querySelectorAll('li')], legCount = legLi.map(li => li.querySelector('em'));
 
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.setPixelRatio(Math.min(1.5, devicePixelRatio));
     renderer.localClippingEnabled = true;
     stage.prepend(renderer.domElement);
     const scene = new T.Scene();
@@ -273,7 +276,7 @@
       bar.style.width = (p * 100).toFixed(1) + '%';
     }
     size(); frame();
-    addEventListener('scroll', () => requestAnimationFrame(frame), { passive: true });
+    let sRaf = 0; addEventListener('scroll', () => { if (sRaf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
     // once the route is complete, keep a light walking it while the section is on screen
     if (!reduce && fp === null) {

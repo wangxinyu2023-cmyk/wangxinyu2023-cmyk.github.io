@@ -82,41 +82,30 @@
     setTimeout(() => { location.href = a.href; }, 760);
   });
 
-  /* ---------- smooth scroll ---------- */
-  let lenis = null;
-  if (!reduce && window.Lenis) {
-    lenis = new Lenis({ lerp: .095, smoothWheel: true, wheelMultiplier: 1 });
-    const raf = t => { lenis.raf(t); requestAnimationFrame(raf); }; requestAnimationFrame(raf);
-    const lb = () => D.querySelector('.lb');
-    new MutationObserver(() => { const l = lb(); if (l) l.classList.contains('open') ? lenis.stop() : lenis.start(); })
-      .observe(B, { subtree: true, attributes: true, attributeFilter: ['class'] });
-    D.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
-      const id = a.getAttribute('href').slice(1), el = id && D.getElementById(id); if (!el) return;
-      e.preventDefault(); lenis.scrollTo(el, { offset: -120, duration: 1.4 }); history.replaceState(null, '', '#' + id);
-    }));
-    if (location.hash && D.getElementById(location.hash.slice(1)) && !/^#image-/.test(location.hash)) setTimeout(() => lenis.scrollTo(location.hash, { offset: -120, immediate: true }), 80);
-  }
-  D.querySelectorAll('[data-top]').forEach(b => b.addEventListener('click', () => lenis ? lenis.scrollTo(0, { duration: 1.8 }) : scrollTo({ top: 0, behavior: 'smooth' })));
+  /* ---------- back to top (native smooth scroll; no scroll-jacking) ---------- */
+  D.querySelectorAll('[data-top]').forEach(b => b.addEventListener('click', () => scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })));
 
   /* ---------- nav: solid over content, hide on scroll down; progress bar ---------- */
   const nav = D.querySelector('.nav'), hero = D.querySelector('.hero, .p-hero');
   const bar = B.classList.contains('project') ? B.appendChild(Object.assign(D.createElement('div'), { className: 'progress' })) : null;
-  let lastY = scrollY, ticking = false;
+  // layout values are measured once (and on resize), never inside the scroll frame
+  let lastY = scrollY, ticking = false, heroH = 0, docH = 1, solid = null, hidden = null;
+  const plx = [...D.querySelectorAll('[data-parallax]')];
+  const measure = () => { heroH = hero ? hero.offsetHeight - 70 : 0; docH = Math.max(1, D.documentElement.scrollHeight - innerHeight); };
   const onScroll = () => {
-    const y = scrollY, heroH = hero ? hero.offsetHeight - 70 : 0;
-    nav.classList.toggle('solid', y > heroH);
-    const hide = y > lastY && y > Math.max(heroH, 200) && !D.querySelector('.lb.open');
-    nav.classList.toggle('hide', hide); B.classList.toggle('nav-hidden', hide);
+    const y = scrollY;
+    const s = y > heroH; if (s !== solid) { solid = s; nav.classList.toggle('solid', s); }
+    const h = y > lastY && y > Math.max(heroH, 200);
+    if (h !== hidden) { hidden = h; nav.classList.toggle('hide', h); B.classList.toggle('nav-hidden', h); }
     lastY = y;
-    if (bar) bar.style.transform = 'scaleX(' + Math.min(1, y / Math.max(1, D.documentElement.scrollHeight - innerHeight)).toFixed(4) + ')';
-    if (!reduce) D.querySelectorAll('[data-parallax]').forEach(p => {
-      const r = p.parentElement.getBoundingClientRect(); if (r.bottom < 0) return;
-      p.style.transform = 'translate3d(0,' + (Math.max(0, -r.top) * .28).toFixed(1) + 'px,0)';
-    });
+    if (bar) bar.style.transform = 'scaleX(' + Math.min(1, y / docH).toFixed(4) + ')';
+    if (!reduce && y < heroH + 120) plx.forEach(p => { p.style.transform = 'translate3d(0,' + (y * .28).toFixed(1) + 'px,0)'; });
     ticking = false;
   };
   addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
-  onScroll();
+  addEventListener('resize', () => { measure(); onScroll(); }, { passive: true });
+  addEventListener('load', measure); setTimeout(measure, 2500);
+  measure(); onScroll();
 
   /* ---------- home hero slideshow with progress bars ---------- */
   const hs = D.querySelector('[data-slides]');
@@ -141,42 +130,21 @@
   const ix = D.querySelector('[data-preview]');
   if (ix && fine && !reduce) {
     const pv = B.appendChild(Object.assign(D.createElement('div'), { className: 'pv' })); const im = pv.appendChild(D.createElement('img')); im.alt = '';
-    let x = 0, y = 0, cx = 0, cy = 0, on = false;
+    let x = 0, y = 0, cx = 0, cy = 0, on = false, run = false;
+    // the follow loop only runs while the preview is shown or still settling
+    const loop = () => {
+      cx += (x - cx) * .16; cy += (y - cy) * .16;
+      const rot = Math.max(-8, Math.min(8, (x - cx) * .05));
+      pv.style.transform = 'translate3d(' + (cx + 28).toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0) translateY(-50%) rotate(' + rot.toFixed(2) + 'deg) scale(' + (on ? 1 : .85) + ')';
+      if (on || Math.abs(x - cx) + Math.abs(y - cy) > .5) requestAnimationFrame(loop); else run = false;
+    };
+    const kick = () => { if (!run) { run = true; requestAnimationFrame(loop); } };
     ix.querySelectorAll('a[data-img]').forEach(a => {
       const pre = new Image(); pre.src = a.dataset.img;
-      a.addEventListener('mouseenter', () => { im.src = a.dataset.img; pv.classList.add('on'); on = true; });
+      a.addEventListener('mouseenter', e => { if (!on && !run) { cx = x = e.clientX; cy = y = e.clientY; } im.src = a.dataset.img; pv.classList.add('on'); on = true; kick(); });
       a.addEventListener('mouseleave', () => { pv.classList.remove('on'); on = false; });
     });
-    addEventListener('mousemove', e => { x = e.clientX; y = e.clientY; }, { passive: true });
-    const loop = () => {
-      cx += (x - cx) * .14; cy += (y - cy) * .14;
-      const rot = Math.max(-8, Math.min(8, (x - cx) * .05));
-      pv.style.left = cx + 'px'; pv.style.top = cy + 'px';
-      pv.style.transform = 'translate(28px,-50%) rotate(' + rot.toFixed(2) + 'deg) scale(' + (on ? 1 : .85) + ')';
-      requestAnimationFrame(loop);
-    };
-    loop();
-  }
-
-  /* ---------- custom cursor over links that open something ---------- */
-  if (fine && !reduce) {
-    const cur = B.appendChild(Object.assign(D.createElement('div'), { className: 'cur' }));
-    let x = -200, y = -200, cx = x, cy = y, zone = null;
-    const pick = t => {
-      let z = t && t.closest ? t.closest('[data-cursor]') : null;
-      if (D.querySelector('.lb.open')) z = null;
-      if (z !== zone) {
-        zone = z; cur.classList.toggle('on', !!z);
-        if (z) { cur.textContent = z.dataset.cursor; cur.classList.toggle('light', !!z.closest('.nextp-main, .hero')); }
-      }
-    };
-    addEventListener('mousemove', e => { x = e.clientX; y = e.clientY; pick(e.target); }, { passive: true });
-    addEventListener('scroll', () => pick(D.elementFromPoint(x, y)), { passive: true });
-    D.addEventListener('click', () => setTimeout(() => pick(D.elementFromPoint(x, y)), 50));
-    D.addEventListener('keyup', () => pick(D.elementFromPoint(x, y)));
-    D.addEventListener('mouseleave', () => { zone = null; cur.classList.remove('on'); });
-    const loop = () => { cx += (x - cx) * .2; cy += (y - cy) * .2; cur.style.left = cx + 'px'; cur.style.top = cy + 'px'; requestAnimationFrame(loop); };
-    loop();
+    ix.addEventListener('mousemove', e => { x = e.clientX; y = e.clientY; kick(); }, { passive: true });
   }
 
   /* ---------- footer wordmark: fit exactly to the column width ---------- */
@@ -190,9 +158,9 @@
   const hl = D.querySelector('.hero');
   if (hl && D.querySelector('.hero-tint')) {
     const hf = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false });
-    const phases = [[0, 'Night', 'rgba(40,60,120,.55)'], [5.5, 'Dawn', 'rgba(255,170,150,.35)'], [8, 'Morning', 'rgba(255,245,225,.12)'],
-      [11, 'Midday', 'rgba(255,255,255,0)'], [15.5, 'Afternoon', 'rgba(255,200,120,.22)'], [17.5, 'Golden hour', 'rgba(255,150,60,.42)'],
-      [19.5, 'Dusk', 'rgba(120,90,160,.45)'], [21, 'Night', 'rgba(40,60,120,.55)']];
+    const phases = [[0, 'Night', 'rgba(20,32,74,.30)'], [5.5, 'Dawn', 'rgba(255,150,120,.12)'], [8, 'Morning', 'rgba(255,245,225,.05)'],
+      [11, 'Midday', 'rgba(255,255,255,0)'], [15.5, 'Afternoon', 'rgba(255,190,110,.08)'], [17.5, 'Golden hour', 'rgba(255,140,50,.16)'],
+      [19.5, 'Dusk', 'rgba(70,50,120,.22)'], [21, 'Night', 'rgba(20,32,74,.30)']];
     const ph = D.querySelector('[data-phase]');
     const setTint = () => {
       const [h, m] = hf.format(new Date()).split(':').map(Number), t = (h % 24) + m / 60;
@@ -200,10 +168,10 @@
       hl.style.setProperty('--tint', cur[2]); if (ph) ph.textContent = '· ' + cur[1];
     };
     setTint(); setInterval(setTint, 60000);
-    if (fine && !reduce) hl.addEventListener('mousemove', e => {
-      const r = hl.getBoundingClientRect();
-      hl.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
-      hl.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+    const sun = hl.querySelector('.hero-sun'); let sx = 0, sy = 0, sq = false;
+    if (sun && fine && !reduce) hl.addEventListener('mousemove', e => {
+      sx = e.clientX; sy = e.clientY + scrollY - hl.offsetTop;
+      if (!sq) { sq = true; requestAnimationFrame(() => { sun.style.transform = 'translate3d(' + sx + 'px,' + sy + 'px,0)'; sq = false; }); }
     }, { passive: true });
   }
 

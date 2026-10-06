@@ -18,12 +18,15 @@
   let started = false;
   const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(() => sec.classList.add('failed')); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
+  // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
+  if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
+
 
   function init() {
     const T = window.THREE, M = window.CLINTON_MODEL, stage = sec.querySelector('.m3-stage');
     const labels = [...sec.querySelectorAll('.ex-labels li')], bar = sec.querySelector('.ex-bar span');
     const renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.setPixelRatio(Math.min(1.5, devicePixelRatio));
     stage.prepend(renderer.domElement);
     const scene = new T.Scene();
     const cam = new T.OrthographicCamera(-1, 1, 1, -1, -10, 10);
@@ -89,7 +92,7 @@
       bar.style.width = (p * 100).toFixed(1) + '%';
     }
     size(); frame();
-    addEventListener('scroll', () => requestAnimationFrame(frame), { passive: true });
+    let sRaf = 0; addEventListener('scroll', () => { if (sRaf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
     // slow turntable while the section is on screen and untouched
     if (!reduce && fp === null) {
