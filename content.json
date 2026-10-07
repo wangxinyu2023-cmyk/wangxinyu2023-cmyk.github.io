@@ -177,42 +177,50 @@
      "title": "Plans and sections",
      "items": [
       {
-       "kind": "half",
-       "src": "images/osborn/plan-market.jpg",
-       "caption": "Roof plan, market day (15 units, table mode)."
+       "kind": "pair",
+       "pair": [
+        {
+         "src": "images/osborn/plan-market.jpg",
+         "label": "Market day",
+         "scale": "1/8\" = 1'-0\"",
+         "caption": "Roof plan, market day — 15 units in table mode, 1/8\" = 1'-0\"."
+        },
+        {
+         "src": "images/osborn/plan-daily.jpg",
+         "label": "Everyday",
+         "scale": "1/8\" = 1'-0\"",
+         "caption": "Roof plan, everyday — 10 units dropped to shaded benches, 1/8\" = 1'-0\"."
+        }
+       ],
+       "note": "Roof plans — one fleet of deployable units, two configurations of the same plaza."
       },
       {
-       "kind": "half",
-       "src": "images/osborn/plan-daily.jpg",
-       "caption": "Roof plan, everyday (10 units, seat mode)."
-      },
-      {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/section-aa-market.jpg",
        "caption": "Section A-A, farmers' market: 15 units in table mode, looking east, 1/8\" = 1'-0\". Zoom Z1 enlarges one unit at 1/2\" = 1'-0\": shoppers at the stall, the reed screen, knife-plate node, telescoping mast, lift and planted box."
       },
       {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/section-aa-daily.jpg",
        "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches, 1/8\" = 1'-0\". Zoom Z2 shows the same unit dropped to seat height at 1/2\" = 1'-0\", with the canopy kept at +7'-8\"."
       },
       {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/section-structure-detail.jpg",
        "caption": "Structure in detail: the canopy knife-plate node at 1-1/2\" = 1'-0\" and the base (mast sleeve, lift track, caster, fold-out foot) at 1\" = 1'-0\", re-drawn from the same model vectors."
       },
       {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/section-bb.jpg",
        "caption": "Section B-B across the former Osborn Street: stalls above, street utilities below (schematic). 1/8\" = 1'-0\"."
       },
       {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/elevation.jpg",
        "caption": "Long elevation of the west row, W1-W6 and the Belmont pairs. 1/8\" = 1'-0\"."
       },
       {
-       "kind": "full",
+       "kind": "plate",
        "src": "images/osborn/unit-heights.jpg",
        "caption": "One unit, two heights: table at 2'-8\" for selling standing, seat at 1'-6\" with a backrest. 1/4\" = 1'-0\"."
       }
