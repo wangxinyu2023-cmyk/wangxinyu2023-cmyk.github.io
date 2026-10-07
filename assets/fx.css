@@ -199,3 +199,24 @@ html.intro .pt{transform:none}
 /* growth note under Selected work */
 .work-note{font-family:var(--sans);font-size:14.5px;line-height:1.6;color:var(--mute);max-width:46ch;margin:14px 0 0}
 @media (max-width:900px){.work-note{margin-top:10px}}
+
+/* zoom affordance: every zoomable figure shows an "enlarge" cue so small drawings are known to open full-screen */
+a.zoom{position:relative}
+a.zoom::after{content:"\2922  Enlarge";position:absolute;right:12px;bottom:12px;z-index:2;font-family:var(--sans);font-size:10.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:rgba(18,18,17,.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:7px 11px;border-radius:99px;opacity:0;transform:translateY(6px);transition:opacity .4s,transform .5s var(--ease);pointer-events:none}
+a.zoom:hover::after,a.zoom:focus-visible::after{opacity:1;transform:none}
+/* drawings in half/third columns are small — keep the cue always visible there so plans read as openable */
+.c-half a.zoom::after,.c-third a.zoom::after,.boards a.zoom::after,.case-grid a.zoom::after{opacity:.9;transform:none}
+.c-half a.zoom:hover::after,.c-third a.zoom:hover::after,.boards a.zoom:hover::after{opacity:1;background:rgba(18,18,17,.8)}
+@media (max-width:900px){a.zoom::after{opacity:.9;transform:none;font-size:9.5px;padding:6px 9px}}
+@media (hover:none){a.zoom::after{opacity:.85;transform:none}}
+
+/* 404 */
+.err{min-height:100svh;display:grid;place-items:center;padding:var(--pad);position:relative;text-align:center}
+.err-in{max-width:30ch}
+.err .label{color:var(--mute)}
+.err h1{font-size:clamp(40px,6vw,92px);line-height:.98;letter-spacing:-.02em;margin:14px 0 18px}
+.err p{font-family:var(--sans);font-size:16px;color:#4a4842;max-width:40ch;margin:0 auto 26px}
+.err-home{font-family:var(--sans);font-size:13px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--ink);padding-bottom:4px}
+.err-home:hover{color:var(--accent);border-color:var(--accent)}
+.err-clock{position:absolute;left:var(--pad);bottom:var(--pad);color:var(--mute)}
+.err-clock b{color:var(--ink);margin-left:6px;font-variant-numeric:tabular-nums}
