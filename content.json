@@ -309,6 +309,22 @@
        "caption": "Mobility, housing and land use."
       }
      ]
+    },
+    {
+     "no": "07",
+     "title": "Process & operation",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/osborn/flow-process.jpg",
+       "caption": "Design process — how the scheme was generated, step by step."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/flow-operation.jpg",
+       "caption": "How one unit deploys — table, canopy and lift in sequence."
+      }
+     ]
     }
    ],
    "boards": [
@@ -607,6 +623,22 @@
        "caption": "Facade openings."
       }
      ]
+    },
+    {
+     "no": "06",
+     "title": "Process & operation",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/clinton-hill/flow-process.jpg",
+       "caption": "Design process — how the scheme was generated, step by step."
+      },
+      {
+       "kind": "full",
+       "src": "images/clinton-hill/flow-operation.jpg",
+       "caption": "A day walking on light — how the building is used."
+      }
+     ]
     }
    ],
    "boards": [
@@ -746,6 +778,22 @@
        "kind": "full",
        "src": "images/between-levels/sections.jpg",
        "caption": "Furnished sections of the room types."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Process & operation",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/between-levels/flow-process.jpg",
+       "caption": "Design process — how the scheme was generated, step by step."
+      },
+      {
+       "kind": "full",
+       "src": "images/between-levels/flow-operation.jpg",
+       "caption": "Walking through the building — how the building is used."
       }
      ]
     }
@@ -993,6 +1041,22 @@
        "kind": "half",
        "src": "images/triangle-pavilions/model-14.jpg",
        "caption": "Detail model: floor build-up and railing."
+      }
+     ]
+    },
+    {
+     "no": "08",
+     "title": "Process & operation",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/flow-process.jpg",
+       "caption": "Design process — how the scheme was generated, step by step."
+      },
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/flow-operation.jpg",
+       "caption": "A route down the slope — how the building is used."
       }
      ]
     }
