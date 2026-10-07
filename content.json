@@ -1,902 +1,1025 @@
 {
-  "site": {
-    "name": "Xinyu Wang",
-    "tagline": "Architecture & urban design",
-    "intro": "Small structures that change with the day: canopies that open for a market, rooms that step down a hillside, perforated roofs that scatter sunlight across a botanical garden.",
-    "email": "",
-    "links": [],
-    "year": "2026",
-    "base_url": "https://wangxinyu2023-cmyk.github.io/",
-    "about": {
-      "headline": "Xinyu Wang is an architecture student working between structure, material and public life.",
-      "bio": [
-        "Xinyu's projects start from a specific place and a specific time of day, and test ideas through models, drawings and simple simulations: where the sun falls at four in the afternoon, how a cart folds, how light reaches a corridor three floors down."
+ "site": {
+  "name": "Xinyu Wang",
+  "tagline": "Architecture & urban design",
+  "intro": "Small structures that change with the day: canopies that open for a market, rooms that step down a hillside, perforated roofs that scatter sunlight across a botanical garden.",
+  "email": "wangxinyu_2023@163.com",
+  "links": [],
+  "year": "2026",
+  "base_url": "https://wangxinyu2023-cmyk.github.io/",
+  "about": {
+   "headline": "Xinyu Wang is an architecture student working between structure, material and public life.",
+   "bio": [
+    "Xinyu Wang is a senior in the BFA Architectural Design program at Parsons School of Design in New York (b. 2004).",
+    "Xinyu's projects start from a specific place and a specific time of day, and test ideas through models, drawings and simple simulations: where the sun falls at four in the afternoon, how a cart folds, how light reaches a corridor three floors down.",
+    "The projects here run from sophomore to senior year. Read together, they are a record of learning to build with light, structure and public life — each one a step further than the last."
+   ],
+   "lists": [
+    [
+     "Education",
+     [
+      [
+       "School",
+       "Parsons School of Design"
       ],
-      "lists": [
-        [
-          "Skills",
-          [
-            [
-              "Modelling",
-              "Rhino, Grasshopper"
-            ],
-            [
-              "Analysis",
-              "Ladybug, Python"
-            ],
-            [
-              "Drawing",
-              "CAD, Illustrator, Photoshop"
-            ],
-            [
-              "Making",
-              "Physical models, prototypes"
-            ]
-          ]
-        ]
+      [
+       "Program",
+       "BFA Architectural Design"
+      ],
+      [
+       "Year",
+       "Senior · Expected 2027"
+      ],
+      [
+       "Location",
+       "New York"
       ]
+     ]
+    ],
+    [
+     "Skills",
+     [
+      [
+       "Modelling",
+       "Rhino, Grasshopper"
+      ],
+      [
+       "Analysis",
+       "Ladybug, Python"
+      ],
+      [
+       "Drawing",
+       "CAD, Illustrator, Photoshop"
+      ],
+      [
+       "Making",
+       "Physical models, prototypes"
+      ]
+     ]
+    ]
+   ]
+  }
+ },
+ "projects": [
+  {
+   "slug": "osborn-plaza",
+   "publish": true,
+   "no": "01",
+   "title": "Osborn Plaza Market Canopy",
+   "year": "Fall 2026",
+   "kind": "Senior studio · Midterm",
+   "place": "Brownsville, Brooklyn, NY",
+   "tools": "Rhino 8, Python, Ladybug, Photoshop",
+   "hero": "images/osborn/hero.jpg",
+   "thumb": "images/osborn/hero.jpg",
+   "summary": "A fleet of deployable bamboo-and-reed carts that turns a Brownsville plaza into a Wednesday farmers' market, then folds down into everyday shaded seating.",
+   "tags": [
+    "Deployable structure",
+    "Bio-based materials",
+    "Public space",
+    "Solar analysis"
+   ],
+   "lede": [
+    "Osborn Plaza sits on a raised block of the former Osborn Street. It has trees, murals and movable cafe tables, but little shade in the late afternoon, exactly when a neighbourhood market would open.",
+    "The project proposes one deployable unit that works in three modes. On market day fifteen units line a single aisle from the south gate to Belmont Avenue; the rest of the week ten of them drop to bench height and give the plaza shaded seats. Bamboo carries, reed shades, planting cools."
+   ],
+   "stats": [
+    {
+     "value": "15",
+     "label": "units on market day"
+    },
+    {
+     "value": "10",
+     "label": "units as everyday benches"
+    },
+    {
+     "value": "-21%",
+     "label": "summer-afternoon sun on the plaza, market day"
+    },
+    {
+     "value": "-68%",
+     "label": "sun on the ground under the canopies"
     }
+   ],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "One cart, two lives",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "deploy",
+       "script": "assets/anim/osborn-plaza.js",
+       "src": "assets/models/osborn-plaza.js",
+       "labels": [
+        "Reed shade skin",
+        "Folding bamboo wings",
+        "Telescoping mast",
+        "Lift top: seat to table",
+        "Planted box",
+        "Swing-out outriggers"
+       ],
+       "hint": "Scroll · drag to rotate",
+       "caption": "One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."
+      },
+      {
+       "kind": "explorer",
+       "id": "explore",
+       "model": "assets/models/osborn-plaza.js",
+       "adapter": "assets/explore/osborn-plaza.js",
+       "tools": [
+        "section",
+        "sun",
+        "paths"
+       ],
+       "lat": 40.66849,
+       "lon": -73.90852,
+       "north_deg": 78.946,
+       "site": "Osborn Plaza, Brownsville",
+       "default_sun": "2026-07-21T14:00",
+       "default_tab": "sun",
+       "title": "Real-time sun and shade",
+       "caption": "Drag the date and time to watch sunlight and shadows move across the plaza, or choose Live now to follow the current time in New York. Switch between fifteen market canopies and ten everyday benches, fold and unfold every cart on site, or turn the canopies off to see the same sun on the bare plaza, then step into the scene at eye level. This is a clear-sky visualization, not live weather; the shade map samples the plaza floor on a 2 ft grid."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "The market street",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Stalls face each other across a 3.5 m aisle, after the Main Street market model. Vegetables and fruit anchor the gate; an info, EBT and health desk and a kitchen demo sit in the south-east court; the planted middle stays open for classes.",
+        "Every unit was placed by script against the surveyed planters, trunks, benches and lanterns, and a 1.8 m accessible route was checked from the gate to every stall front."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/osborn/axon-market.jpg",
+       "caption": "Axonometric of market day, hidden-line from the Rhino model; trees drawn transparent."
+      },
+      {
+       "kind": "half",
+       "src": "images/osborn/market-closeup.jpg",
+       "caption": "Market day, 16 July, 4 pm: the reed canopies throw dappled shade over the stalls and the aisle (sun position from Ladybug, shadows rendered in Blender Cycles, AI-assisted finish)."
+      },
+      {
+       "kind": "half",
+       "src": "images/osborn/everyday-seat.jpg",
+       "caption": "Everyday mode, 16 July, 1:30 pm: the same carts as shaded benches; people sit in a soft pool of reed-filtered shade while the paving around them is in full sun."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Plans and sections",
+     "items": [
+      {
+       "kind": "half",
+       "src": "images/osborn/plan-market.jpg",
+       "caption": "Roof plan, market day (15 units, table mode)."
+      },
+      {
+       "kind": "half",
+       "src": "images/osborn/plan-daily.jpg",
+       "caption": "Roof plan, everyday (10 units, seat mode)."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/section-aa-market.jpg",
+       "caption": "Section A-A, farmers' market: 15 units in table mode, looking east, 1/8\" = 1'-0\". Zoom Z1 enlarges one unit at 1/2\" = 1'-0\": shoppers at the stall, the reed screen, knife-plate node, telescoping mast, lift and planted box."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/section-aa-daily.jpg",
+       "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches, 1/8\" = 1'-0\". Zoom Z2 shows the same unit dropped to seat height at 1/2\" = 1'-0\", with the canopy kept at +7'-8\"."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/section-structure-detail.jpg",
+       "caption": "Structure in detail: the canopy knife-plate node at 1-1/2\" = 1'-0\" and the base (mast sleeve, lift track, caster, fold-out foot) at 1\" = 1'-0\", re-drawn from the same model vectors."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/section-bb.jpg",
+       "caption": "Section B-B across the former Osborn Street: stalls above, street utilities below (schematic). 1/8\" = 1'-0\"."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/elevation.jpg",
+       "caption": "Long elevation of the west row, W1-W6 and the Belmont pairs. 1/8\" = 1'-0\"."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/unit-heights.jpg",
+       "caption": "One unit, two heights: table at 2'-8\" for selling standing, seat at 1'-6\" with a backrest. 1/4\" = 1'-0\"."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Sun and shade",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Peak summer, June to August, noon to 5 pm, simulated with Ladybug Tools and Radiance on the site model and a LiDAR model of the neighbouring buildings. The market canopies cut solar radiation on the plaza by 21% and on the ground beneath them by two thirds; the everyday benches cut it by 13%.",
+        "On a 92 F July afternoon the whole plaza is in strong heat stress, with or without canopies, but very strong heat stress (UTCI above 38 C) drops from 21% to 9% of the plaza. The reed lets 30% of the sun through, trading a little shade for airflow."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/osborn/sun-hours.jpg",
+       "caption": "Cumulative solar radiation, June-August 12:00-17:00 (no canopies / market day / everyday), and UTCI at 14:00 on a July heat day."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/sun-angle-test.jpg",
+       "caption": "Sun angle test, 21 July: 65-68% of the plaza is in direct sun at 13:00-14:00; the market canopies bring this down to 52-54%."
+      }
+     ]
+    },
+    {
+     "no": "05",
+     "title": "Material and structure",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "A hybrid frame keeps five aluminium spine rails that carry the lift mechanism and replaces the wings with laminated bamboo, cutting frame emissions by about half while storing carbon.",
+        "Planted boxes at both ends bring back the green, cooling edge of the first study. Every joint is bolted, pinned or clipped, so worn parts are swapped rather than repaired; bamboo rails sit on the mast heads through stainless knife plates and isolated bolts."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/osborn/exploded-unit.jpg",
+       "caption": "One unit taken apart, drawn from the model: reed shade panels, bamboo wings, aluminium masts, table slats, lift and chassis, with the two planted boxes slid out."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/node-detail.jpg",
+       "caption": "The joint between bamboo and metal, 3\" = 1'-0\": a steel knife plate slots into the laminated bamboo rail and two stainless bolts pin it to the mast head; rubber and nylon keep the bamboo off the metal."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/planters-render.jpg",
+       "caption": "Market day with the planted boxes at the ends of each cart."
+      }
+     ]
+    },
+    {
+     "no": "06",
+     "title": "Urban systems",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Food, health, heat, mobility, housing and water around the plaza, read at four scales: the city, Community District 16, the five-minute walk and the plaza itself. Every map is drawn from NYC open data at a true scale.",
+        "Grocery stores are within 300 ft, yet premature death is twice the city rate; heat vulnerability is 5 of 5; seven in ten households have no car; 83% of homes within a five-minute walk are NYCHA. The canopy is a walking market and daily shade for its neighbours, not more retail."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/osborn/urban-scales.jpg",
+       "caption": "City heat vulnerability and the plaza at 1\" = 40'-0\"."
+      },
+      {
+       "kind": "full",
+       "src": "images/osborn/urban-figures.jpg",
+       "caption": "Key figures for Brownsville against New York City."
+      },
+      {
+       "kind": "half",
+       "src": "images/osborn/urban-food-health.jpg",
+       "caption": "Food system, public health, heat and green: one five-minute-walk map or chart per system."
+      },
+      {
+       "kind": "half",
+       "src": "images/osborn/urban-heat-mobility-housing.jpg",
+       "caption": "Mobility, housing and land use."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/osborn/board-01.jpg",
+     "caption": "Bio-based material research"
+    },
+    {
+     "src": "images/osborn/board-02.jpg",
+     "caption": "The market in the plaza"
+    },
+    {
+     "src": "images/osborn/board-03.jpg",
+     "caption": "Street, plaza and what lies below"
+    },
+    {
+     "src": "images/osborn/board-04.jpg",
+     "caption": "Street and canopy sections"
+    },
+    {
+     "src": "images/osborn/board-05.jpg",
+     "caption": "Assembly and material"
+    },
+    {
+     "src": "images/osborn/board-06.jpg",
+     "caption": "Plaza plans"
+    },
+    {
+     "src": "images/osborn/board-07.jpg",
+     "caption": "The market street and its materials"
+    },
+    {
+     "src": "images/osborn/board-08.jpg",
+     "caption": "How one unit stands up"
+    },
+    {
+     "src": "images/osborn/board-09.jpg",
+     "caption": "Urban systems research"
+    }
+   ],
+   "note": "Renders are AI-assisted from Rhino base views of the model; structural figures are design-stage hand calculations.",
+   "category": "Studio"
   },
-  "projects": [
+  {
+   "slug": "clinton-hill",
+   "publish": true,
+   "no": "02",
+   "title": "The Vertical Village",
+   "year": "Spring 2026",
+   "kind": "Studio · Library and affordable housing",
+   "place": "Washington Ave, Clinton Hill, Brooklyn, NY",
+   "tools": "Rhino, CAD, rendering, laser-cut model",
+   "hero": "images/clinton-hill/render-street.jpg",
+   "thumb": "images/clinton-hill/render-skylight.jpg",
+   "summary": "Affordable housing stacked above a public library. A glass-and-timber core joins the reading floors, and walkable glass plates in the corridors pull daylight down through the homes.",
+   "tags": [
+    "Mixed use",
+    "Affordable housing",
+    "Library",
+    "Daylight",
+    "Mass timber"
+   ],
+   "lede": [
+    "Clinton Hill grew from Dutch farmland into the \"Gold Coast\" mansions of Clinton Avenue, then was subdivided into rooming houses when the Navy Yard brought wartime workers. The project adds to that layered density: a public library on the ground and cellar floors, with three floors of affordable homes above.",
+    "Two strategies organise it. In the library, a glazed accessible elevator wrapped by a U-shaped wooden reading stair turns circulation into a gathering landscape. On the residential floors, staggered \"Tetris\" glass plates set into the corridor slabs act as light wells, so the double-loaded corridor becomes a bright interior street."
+   ],
+   "stats": [
     {
-      "slug": "osborn-plaza",
-      "publish": true,
-      "no": "01",
-      "title": "Osborn Plaza Market Canopy",
-      "year": "Fall 2026",
-      "kind": "Senior studio · Midterm",
-      "place": "Brownsville, Brooklyn, NY",
-      "tools": "Rhino 8, Python, Ladybug, Photoshop",
-      "hero": "images/osborn/hero.jpg",
-      "thumb": "images/osborn/hero.jpg",
-      "summary": "A fleet of deployable bamboo-and-reed carts that turns a Brownsville plaza into a Wednesday farmers' market, then folds down into everyday shaded seating.",
-      "tags": [
-        "Deployable structure",
-        "Bio-based materials",
-        "Public space",
-        "Solar analysis"
-      ],
-      "lede": [
-        "Osborn Plaza sits on a raised block of the former Osborn Street. It has trees, murals and movable cafe tables, but little shade in the late afternoon, exactly when a neighbourhood market would open.",
-        "The project proposes one deployable unit that works in three modes. On market day fifteen units line a single aisle from the south gate to Belmont Avenue; the rest of the week ten of them drop to bench height and give the plaza shaded seats. Bamboo carries, reed shades, planting cools."
-      ],
-      "stats": [
-        {
-          "value": "15",
-          "label": "units on market day"
-        },
-        {
-          "value": "10",
-          "label": "units as everyday benches"
-        },
-        {
-          "value": "-21%",
-          "label": "summer-afternoon sun on the plaza, market day"
-        },
-        {
-          "value": "-68%",
-          "label": "sun on the ground under the canopies"
-        }
-      ],
-      "blocks": [
-        {
-          "id": "model",
-          "no": "01",
-          "title": "One cart, two lives",
-          "items": [
-            {"kind":"model3d","anim":"deploy","script":"assets/anim/osborn-plaza.js","src":"assets/models/osborn-plaza.js","labels":["Reed shade skin","Folding bamboo wings","Telescoping mast","Lift top: seat to table","Planted box","Swing-out outriggers"],"hint":"Scroll · drag to rotate","caption":"One cart, two lives: the bamboo and reed canopy arrives folded, deploys on site and lifts into a market table. Fifteen units fill Osborn Plaza for the Wednesday farmers' market; ten stay on as shaded benches the rest of the week, traced here through a July day of real sun and shadow."},
-            {"kind":"explorer","id":"explore","model":"assets/models/osborn-plaza.js","adapter":"assets/explore/osborn-plaza.js","tools":["section","sun","paths"],"lat":40.66849,"lon":-73.90852,"north_deg":78.946,"site":"Osborn Plaza, Brownsville","default_sun":"2026-07-21T14:00","default_tab":"sun","title":"Real-time sun and shade","caption":"Drag the date and time to watch sunlight and shadows move across the plaza, or choose Live now to follow the current time in New York. Switch between fifteen market canopies and ten everyday benches, fold and unfold every cart on site, or turn the canopies off to see the same sun on the bare plaza, then step into the scene at eye level. This is a clear-sky visualization, not live weather; the shade map samples the plaza floor on a 2 ft grid."}
-          ]
-        },
-        {
-          "no": "02",
-          "title": "The market street",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "Stalls face each other across a 3.5 m aisle, after the Main Street market model. Vegetables and fruit anchor the gate; an info, EBT and health desk and a kitchen demo sit in the south-east court; the planted middle stays open for classes.",
-                "Every unit was placed by script against the surveyed planters, trunks, benches and lanterns, and a 1.8 m accessible route was checked from the gate to every stall front."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/osborn/axon-market.jpg",
-              "caption": "Axonometric of market day, hidden-line from the Rhino model; trees drawn transparent."
-            },
-            {
-              "kind": "half",
-              "src": "images/osborn/market-closeup.jpg",
-              "caption": "Market day, 16 July, 4 pm: the reed canopies throw dappled shade over the stalls and the aisle (sun position from Ladybug, shadows rendered in Blender Cycles, AI-assisted finish)."
-            },
-            {
-              "kind": "half",
-              "src": "images/osborn/everyday-seat.jpg",
-              "caption": "Everyday mode, 16 July, 1:30 pm: the same carts as shaded benches; people sit in a soft pool of reed-filtered shade while the paving around them is in full sun."
-            }
-          ]
-        },
-        {
-          "no": "03",
-          "title": "Plans and sections",
-          "items": [
-            {
-              "kind": "half",
-              "src": "images/osborn/plan-market.jpg",
-              "caption": "Roof plan, market day (15 units, table mode)."
-            },
-            {
-              "kind": "half",
-              "src": "images/osborn/plan-daily.jpg",
-              "caption": "Roof plan, everyday (10 units, seat mode)."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/section-aa-market.jpg",
-              "caption": "Section A-A, farmers' market: 15 units in table mode, looking east, 1/8\" = 1'-0\". Zoom Z1 enlarges one unit at 1/2\" = 1'-0\": shoppers at the stall, the reed screen, knife-plate node, telescoping mast, lift and planted box."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/section-aa-daily.jpg",
-              "caption": "Section A-A, everyday: the same carts lowered to 10 shaded benches, 1/8\" = 1'-0\". Zoom Z2 shows the same unit dropped to seat height at 1/2\" = 1'-0\", with the canopy kept at +7'-8\"."},
-            {
-              "kind": "full",
-              "src": "images/osborn/section-structure-detail.jpg",
-              "caption": "Structure in detail: the canopy knife-plate node at 1-1/2\" = 1'-0\" and the base (mast sleeve, lift track, caster, fold-out foot) at 1\" = 1'-0\", re-drawn from the same model vectors."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/section-bb.jpg",
-              "caption": "Section B-B across the former Osborn Street: stalls above, street utilities below (schematic). 1/8\" = 1'-0\"."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/elevation.jpg",
-              "caption": "Long elevation of the west row, W1-W6 and the Belmont pairs. 1/8\" = 1'-0\"."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/unit-heights.jpg",
-              "caption": "One unit, two heights: table at 2'-8\" for selling standing, seat at 1'-6\" with a backrest. 1/4\" = 1'-0\"."
-            }
-          ]
-        },
-        {
-          "no": "04",
-          "title": "Sun and shade",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "Peak summer, June to August, noon to 5 pm, simulated with Ladybug Tools and Radiance on the site model and a LiDAR model of the neighbouring buildings. The market canopies cut solar radiation on the plaza by 21% and on the ground beneath them by two thirds; the everyday benches cut it by 13%.",
-                "On a 92 F July afternoon the whole plaza is in strong heat stress, with or without canopies, but very strong heat stress (UTCI above 38 C) drops from 21% to 9% of the plaza. The reed lets 30% of the sun through, trading a little shade for airflow."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/osborn/sun-hours.jpg",
-              "caption": "Cumulative solar radiation, June-August 12:00-17:00 (no canopies / market day / everyday), and UTCI at 14:00 on a July heat day."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/sun-angle-test.jpg",
-              "caption": "Sun angle test, 21 July: 65-68% of the plaza is in direct sun at 13:00-14:00; the market canopies bring this down to 52-54%."
-            }
-          ]
-        },
-        {
-          "no": "05",
-          "title": "Material and structure",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "A hybrid frame keeps five aluminium spine rails that carry the lift mechanism and replaces the wings with laminated bamboo, cutting frame emissions by about half while storing carbon.",
-                "Planted boxes at both ends bring back the green, cooling edge of the first study. Every joint is bolted, pinned or clipped, so worn parts are swapped rather than repaired; bamboo rails sit on the mast heads through stainless knife plates and isolated bolts."
-              ]
-            },
-            {
-              "kind": "third",
-              "src": "images/osborn/exploded-unit.jpg",
-              "caption": "One unit taken apart, drawn from the model: reed shade panels, bamboo wings, aluminium masts, table slats, lift and chassis, with the two planted boxes slid out."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/node-detail.jpg",
-              "caption": "The joint between bamboo and metal, 3\" = 1'-0\": a steel knife plate slots into the laminated bamboo rail and two stainless bolts pin it to the mast head; rubber and nylon keep the bamboo off the metal."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/planters-render.jpg",
-              "caption": "Market day with the planted boxes at the ends of each cart."
-            }
-          ]
-        },
-        {
-          "no": "06",
-          "title": "Urban systems",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "Food, health, heat, mobility, housing and water around the plaza, read at four scales: the city, Community District 16, the five-minute walk and the plaza itself. Every map is drawn from NYC open data at a true scale.",
-                "Grocery stores are within 300 ft, yet premature death is twice the city rate; heat vulnerability is 5 of 5; seven in ten households have no car; 83% of homes within a five-minute walk are NYCHA. The canopy is a walking market and daily shade for its neighbours, not more retail."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/osborn/urban-scales.jpg",
-              "caption": "City heat vulnerability and the plaza at 1\" = 40'-0\"."
-            },
-            {
-              "kind": "full",
-              "src": "images/osborn/urban-figures.jpg",
-              "caption": "Key figures for Brownsville against New York City."
-            },
-            {
-              "kind": "half",
-              "src": "images/osborn/urban-food-health.jpg",
-              "caption": "Food system, public health, heat and green: one five-minute-walk map or chart per system."
-            },
-            {
-              "kind": "half",
-              "src": "images/osborn/urban-heat-mobility-housing.jpg",
-              "caption": "Mobility, housing and land use."
-            }
-          ]
-        }
-      ],
-      "boards": [
-        {
-          "src": "images/osborn/board-01.jpg",
-          "caption": "Bio-based material research"
-        },
-        {
-          "src": "images/osborn/board-02.jpg",
-          "caption": "The market in the plaza"
-        },
-        {
-          "src": "images/osborn/board-03.jpg",
-          "caption": "Street, plaza and what lies below"
-        },
-        {
-          "src": "images/osborn/board-04.jpg",
-          "caption": "Street and canopy sections"
-        },
-        {
-          "src": "images/osborn/board-05.jpg",
-          "caption": "Assembly and material"
-        },
-        {
-          "src": "images/osborn/board-06.jpg",
-          "caption": "Plaza plans"
-        },
-        {
-          "src": "images/osborn/board-07.jpg",
-          "caption": "The market street and its materials"
-        },
-        {
-          "src": "images/osborn/board-08.jpg",
-          "caption": "How one unit stands up"
-        },
-        {
-          "src": "images/osborn/board-09.jpg",
-          "caption": "Urban systems research"
-        }
-      ],
-      "note": "Renders are AI-assisted from Rhino base views of the model; structural figures are design-stage hand calculations.",
-      "category": "Studio"
+     "value": "2",
+     "label": "library floors"
     },
     {
-      "slug": "clinton-hill",
-      "publish": true,
-      "no": "02",
-      "title": "The Vertical Village",
-      "year": "Spring 2026",
-      "kind": "Studio · Library and affordable housing",
-      "place": "Washington Ave, Clinton Hill, Brooklyn, NY",
-      "tools": "Rhino, CAD, rendering, laser-cut model",
-      "hero": "images/clinton-hill/render-street.jpg",
-      "thumb": "images/clinton-hill/render-skylight.jpg",
-      "summary": "Affordable housing stacked above a public library. A glass-and-timber core joins the reading floors, and walkable glass plates in the corridors pull daylight down through the homes.",
-      "tags": [
-        "Mixed use",
-        "Affordable housing",
-        "Library",
-        "Daylight",
-        "Mass timber"
-      ],
-      "lede": [
-        "Clinton Hill grew from Dutch farmland into the \"Gold Coast\" mansions of Clinton Avenue, then was subdivided into rooming houses when the Navy Yard brought wartime workers. The project adds to that layered density: a public library on the ground and cellar floors, with three floors of affordable homes above.",
-        "Two strategies organise it. In the library, a glazed accessible elevator wrapped by a U-shaped wooden reading stair turns circulation into a gathering landscape. On the residential floors, staggered \"Tetris\" glass plates set into the corridor slabs act as light wells, so the double-loaded corridor becomes a bright interior street."
-      ],
-      "stats": [
-        {
-          "value": "2",
-          "label": "library floors"
-        },
-        {
-          "value": "3",
-          "label": "residential floors"
-        },
-        {
-          "value": "CLT + GLT",
-          "label": "mass-timber structure"
-        },
-        {
-          "value": "Wood",
-          "label": "laser-cut physical model"
-        }
-      ],
-      "blocks": [
-        {
-          "id": "explode",
-          "no": "01",
-          "title": "Exploded model",
-          "items": [
-            {
-              "kind": "model3d",
-              "anim": "explode",
-              "script": "assets/anim/clinton-hill.js",
-              "labels": ["Roof", "Level 4", "Level 3", "Level 2", "Ground floor", "Cellar library"],
-              "src": "assets/models/clinton-hill.js",
-              "caption": "The design model itself, scrolled apart floor by floor: cellar library, ground-floor civic core, three residential floors and the roof with its skylights. Glulam frame in timber tone, glazing translucent."
-            },
-            {
-              "kind": "explode",
-              "src": "images/clinton-hill/explode",
-              "caption": "Scroll to take the building apart: cellar library, ground-floor civic core, three residential floors and the roof with its skylights. Red lines trace the vertical circulation."
-            },
-            {"kind":"explorer","id":"explore","model":"assets/models/clinton-hill.js","adapter":"assets/explore/clinton-hill.js","tools":["section","sun","paths"],"lat":40.6876,"lon":-73.9663,"north_deg":90,"site":"Washington Ave, Clinton Hill","default_sun":"2026-03-21T15:00","title":"Inside the stack","caption":"Slice the building in plan at any floor or in section, light it for any date on Washington Avenue, and follow library visitors down the reading stair and residents up the stair and elevator cores. Plan north follows the model's +Y axis, with Washington Avenue taken as running north-south."}
-          ]
-        },
-        {
-          "no": "02",
-          "title": "A day walking on light",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "A resident leaves her apartment on the third floor and steps onto a T-shaped field of structural glass. Sunlight from the skylight filters through the plates; below, a neighbour sorts laundry in the micro-lounge.",
-                "Downstairs the language shifts from home to civic room. The elevator and the grand reading bleachers give every visitor, with or without a stroller, the same view of the stacks."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/clinton-hill/render-skylight.jpg",
-              "caption": "The luminous corridor under the skylight."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/render-atrium.jpg",
-              "caption": "Library reading floor from above."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/render-reading.jpg",
-              "caption": "Reading bleachers around the civic core."
-            }
-          ]
-        },
-        {
-          "no": "03",
-          "title": "Site and plans",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "The site on Washington Avenue sits between the Pratt campus, the brownstone blocks of Clinton Hill and the transit corridors to downtown Brooklyn. The site study maps its historical evolution and the axes that meet at the library door."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/clinton-hill/site-diagram.jpg",
-              "caption": "Site location, historical evolution and development phases."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/site-plan.jpg",
-              "caption": "Site plan."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/plans-ground-cellar.jpg",
-              "caption": "Ground floor and cellar: the library."
-            },
-            {
-              "kind": "full",
-              "src": "images/clinton-hill/plans-upper.jpg",
-              "caption": "Residential floors: two- and three-bedroom units around the luminous corridor."
-            }
-          ]
-        },
-        {
-          "no": "04",
-          "title": "Sections, elevations and construction",
-          "items": [
-            {
-              "kind": "full",
-              "src": "images/clinton-hill/section-b.jpg",
-              "caption": "Section B from the street: reading stair down to the cellar."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/section-a.jpg",
-              "caption": "Section A: light wells through the residential floors."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/elevations.jpg",
-              "caption": "Street elevations."
-            },
-            {
-              "kind": "text",
-              "text": [
-                "A glue-laminated timber frame carries cross-laminated timber slabs; the wall builds out from stud framing and mineral-wool insulation to a ventilated cladding. The exploded axonometric traces the vertical circulation through all five levels."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/clinton-hill/construction-detail.jpg",
-              "caption": "Wall and floor construction detail, 1/2\" = 1'-0\"."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/exploded-axon.jpg",
-              "caption": "Exploded axonometric."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/render-entrance.jpg",
-              "caption": "Library entrance."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/render-roof.jpg",
-              "caption": "Roof terrace and skylights."
-            }
-          ]
-        },
-        {
-          "no": "05",
-          "title": "Physical model",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "A laser-cut wood model of the whole building, built to be opened up: the facade, a cut-away unit, the light well and the library floor can all be read from outside."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/clinton-hill/model-01.jpg",
-              "caption": "Street elevation of the model."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/model-09.jpg",
-              "caption": "Ground-floor library and entrance terrace."
-            },
-            {
-              "kind": "half",
-              "src": "images/clinton-hill/model-08.jpg",
-              "caption": "Facade in perspective."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-00.jpg",
-              "caption": "Corner and roof."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-02.jpg",
-              "caption": "Cut-away unit."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-07.jpg",
-              "caption": "Looking down into the light well."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-04.jpg",
-              "caption": "Section through a unit."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-05.jpg",
-              "caption": "Stacked rooms seen through the openings."
-            },
-            {
-              "kind": "third",
-              "src": "images/clinton-hill/model-06.jpg",
-              "caption": "Section cut through two floors."
-            },
-            {
-              "kind": "full",
-              "src": "images/clinton-hill/model-03.jpg",
-              "caption": "Facade openings."
-            }
-          ]
-        }
-      ],
-      "boards": [
-        {
-          "src": "images/clinton-hill/board-1.jpg",
-          "caption": "Board 1: site, narrative, plans"
-        },
-        {
-          "src": "images/clinton-hill/board-2.jpg",
-          "caption": "Board 2: construction, sections"
-        }
-      ],
-      "note": "",
-      "category": "Studio"
+     "value": "3",
+     "label": "residential floors"
     },
     {
-      "slug": "between-levels",
-      "publish": true,
-      "no": "03",
-      "title": "Between Levels",
-      "year": "2026",
-      "kind": "Self-initiated architecture project",
-      "place": "Hillside neighbourhood (speculative)",
-      "tools": "Rhino 7, Python, CAD",
-      "hero": "images/between-levels/night-hero.jpg",
-      "thumb": "images/between-levels/night-hero.jpg",
-      "summary": "A common street across three levels: a hillside neighbourhood building where a shared stair-street, galleries and forty-eight public rooms connect streets 12 m apart.",
-      "tags": [
-        "Housing & community",
-        "Topography",
-        "Typology",
-        "Systems"
-      ],
-      "lede": [
-        "Three streets enter a sloping site at +0, +6 and +12 m. Instead of one building per street, two stepped wings on a 36 x 48 m grid share a continuous stair-street and covered galleries, so the building works as a public route as much as a container.",
-        "Twelve room types, from a repair shop to a reading lounge, are deployed as 48 rooms across five floors. Each was furnished for its actual width rather than copied and renamed."
-      ],
-      "stats": [
-        {
-          "value": "3",
-          "label": "street entrances"
-        },
-        {
-          "value": "5",
-          "label": "floor levels"
-        },
-        {
-          "value": "48",
-          "label": "public rooms, 12 types"
-        },
-        {
-          "value": "4,104 m²",
-          "label": "rooms, galleries and bridges"
-        }
-      ],
-      "blocks": [
-        {
-          "id": "model",
-          "no": "01",
-          "title": "Building it up",
-          "items": [
-            {"kind":"model3d","anim":"grow","script":"assets/anim/between-levels.js","src":"assets/models/between-levels.js","labels":["Upper street +12 m","Middle lane +6 m","Lower street +0 m"],"hint":"Scroll · drag to rotate","caption":"The building assembled from its own model: hillside and streets, frame, two stepped wings, forty-eight rooms coloured by type, and the shared stair-street that carries a public route uphill."},
-            {"kind":"explorer","id":"explore","model":"assets/models/between-levels.js","adapter":"assets/explore/between-levels.js","tools":["section","sun","paths"],"lat":40.7128,"lon":-74.006,"north_deg":90,"site":"Speculative site, sun for New York City","default_sun":"2026-10-15T16:00","title":"Walking up through the building","caption":"Cut through the stepped wings, light the slope through the year and follow people up the stair-street from the lower street to the upper one. The site is speculative: sun angles are computed for New York City, with the slope rising to the north."}
-          ]
-        },
-        {
-          "no": "02",
-          "title": "A street through the building",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "Two stepped wings leave a planted stair-street between them. Galleries on every level open onto it, and two bridges cross it, so a resident can walk from the lower street to the upper one through public rooms."
-              ]
-            },
-            {
-              "kind": "wide",
-              "src": "images/between-levels/cutaway-axon.jpg",
-              "caption": "Axonometric section of the inhabited public street."
-            },
-            {
-              "kind": "half",
-              "src": "images/between-levels/hero.jpg",
-              "caption": "Front aerial of the V05 model."
-            },
-            {
-              "kind": "half",
-              "src": "images/between-levels/roof-off-axon.jpg",
-              "caption": "Roof-off axonometric: rooms, galleries and stair-street."
-            }
-          ]
-        },
-        {
-          "no": "03",
-          "title": "Rooms and variants",
-          "items": [
-            {
-              "kind": "half",
-              "src": "images/between-levels/modules.jpg",
-              "caption": "Twelve room types."
-            },
-            {
-              "kind": "half",
-              "src": "images/between-levels/variants.jpg",
-              "caption": "Sixteen spatial variants, 2D and 3D matched."
-            },
-            {
-              "kind": "full",
-              "src": "images/between-levels/sections.jpg",
-              "caption": "Furnished sections of the room types."
-            }
-          ]
-        }
-      ],
-      "boards": [
-        {
-          "src": "images/between-levels/board.jpg",
-          "caption": "Presentation board (A0)"
-        }
-      ],
-      "note": "",
-      "category": "Self-initiated"
+     "value": "CLT + GLT",
+     "label": "mass-timber structure"
     },
     {
-      "slug": "triangle-pavilions",
-      "publish": true,
-      "no": "04",
-      "title": "Triangle Commons",
-      "year": "Spring 2025",
-      "kind": "Sophomore studio · Multi-purpose building",
-      "place": "New York Botanical Garden, Bronx, NY",
-      "tools": "Rhino, rendering, Photoshop, physical model",
-      "hero": "images/triangle-pavilions/aerial-2.jpg",
-      "thumb": "images/triangle-pavilions/aerial-1.jpg",
-      "summary": "A multi-purpose building for the New York Botanical Garden: triangular pavilions on slender columns, rotated off one triangular grid, stepping down a slope to the water and bridging the road beside it.",
-      "tags": [
-        "Landscape",
-        "Public space",
-        "Light and shade",
-        "Topography"
-      ],
-      "lede": [
-        "A multi-purpose building for the New York Botanical Garden in the Bronx, on a slope between a road and the water. The site is first filled as a solid, then cut by a triangular grid. Triangles are aligned to the grid, duplicated and rotated, and the leftover gaps become a continuous route: up from the road, over a bridge, through the decks and down to the water.",
-        "Enclosed triangles hold a library, workspaces and a cafe deck with planted roofs. Between them, perforated dark canopies on a forest of thin white columns shade an open plaza, where the light changes from morning to afternoon."
-      ],
-      "stats": [],
-      "blocks": [
-        {
-          "id": "model",
-          "no": "01",
-          "title": "From grid to pavilions",
-          "items": [
-            {"kind":"model3d","anim":"unfold","script":"assets/anim/triangle-pavilions.js","src":"assets/models/triangle-pavilions.js","labels":["Perforated canopies","Library · green roof","Multipurpose classroom","Bridge pavilion"],"hint":"Scroll · drag to rotate","caption":"A multipurpose building for the New York Botanical Garden: triangles drawn on a site grid, duplicated and rotated, then lifted above the garden on a forest of slender columns."}
-          ]
-        },
-        {
-          "no": "02",
-          "title": "Concept",
-          "items": [
-            {
-              "kind": "full",
-              "src": "images/triangle-pavilions/concept.jpg",
-              "caption": "Concept: fill the site as a solid, divide it with a triangular grid, align the triangles, duplicate and rotate, refine the circulation."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/exploded-massing.jpg",
-              "caption": "Exploded massing: roofs, structure, program and routes."
-            },
-            {
-              "kind": "wide",
-              "src": "images/triangle-pavilions/aerial-1.jpg",
-              "caption": "Aerial view from the road, with the planted roof terrace and the bridge."
-            }
-          ]
-        },
-        {
-          "no": "03",
-          "title": "Light under the canopies",
-          "items": [
-            {
-              "kind": "text",
-              "text": [
-                "The dark roof triangles are perforated, so the plaza below is lit by moving spots of sun. The three views follow the same space through a day."
-              ]
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/r-6am.jpg",
-              "caption": "6 am."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/r-12pm.jpg",
-              "caption": "12 pm."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/r-3pm.jpg",
-              "caption": "3 pm."
-            },
-            {
-              "kind": "full",
-              "src": "images/triangle-pavilions/aerial-3.jpg",
-              "caption": "Aerial view over the pond."
-            }
-          ]
-        },
-        {
-          "no": "04",
-          "title": "Plans and sections",
-          "items": [
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/plan-ground.jpg",
-              "caption": "Ground floor plan."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/plan-second.jpg",
-              "caption": "Second floor plan."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/plan-roof.jpg",
-              "caption": "Roof plan."
-            },
-            {
-              "kind": "full",
-              "src": "images/triangle-pavilions/sections.jpg",
-              "caption": "Site sections 1 and 2 across the slope."
-            },
-            {
-              "kind": "full",
-              "src": "images/triangle-pavilions/wall-section.jpg",
-              "caption": "Wall section: stepped planters on the roof terrace and the floor build-up."
-            }
-          ]
-        },
-        {
-          "no": "05",
-          "title": "Inside the triangles",
-          "items": [
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/r-interior-library.jpg",
-              "caption": "Cut-away: workspace and library below, meeting room above."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/r-interior-deck.jpg",
-              "caption": "Cafe deck under a white canopy."
-            },
-            {
-              "kind": "wide",
-              "src": "images/triangle-pavilions/aerial-2.jpg",
-              "caption": "Aerial view: perforated canopies, planted roof and the bridge over the road."
-            }
-          ]
-        },
-        {
-          "no": "06",
-          "title": "Planting over time",
-          "items": [
-            {
-              "kind": "full",
-              "src": "images/triangle-pavilions/vignette.jpg",
-              "caption": "Vignettes after planting, at 3, 10 and 30 years."
-            }
-          ]
-        },
-        {
-          "no": "07",
-          "title": "Physical model",
-          "items": [
-            {
-              "kind": "wide",
-              "src": "images/triangle-pavilions/model-09.jpg",
-              "caption": "Site model: triangular roofs over contour layers."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-02.jpg",
-              "caption": "Roof plan view of the site model."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-01.jpg",
-              "caption": "Site model, street view."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-03.jpg",
-              "caption": "Decks and stairs on slender columns."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-04.jpg",
-              "caption": "Canopy and stair."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-05.jpg",
-              "caption": "Curved enclosure on columns."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-06.jpg",
-              "caption": "Stair up to the deck."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-07.jpg",
-              "caption": "The tower block."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-08.jpg",
-              "caption": "Under the canopy."
-            },
-            {
-              "kind": "third",
-              "src": "images/triangle-pavilions/model-10.jpg",
-              "caption": "Detail model: slabs, column and facade grid."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-12.jpg",
-              "caption": "Detail model: two floor plates on a single column."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-11.jpg",
-              "caption": "Detail model: slab edge and glazing."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-13.jpg",
-              "caption": "Detail model from below."
-            },
-            {
-              "kind": "half",
-              "src": "images/triangle-pavilions/model-14.jpg",
-              "caption": "Detail model: floor build-up and railing."
-            }
-          ]
-        }
-      ],
-      "boards": [],
-      "note": "",
-      "category": "Studio"
-    },
-    {
-      "slug": "architectural-screens",
-      "publish": false,
-      "no": "04",
-      "title": "Transforming Light",
-      "year": "2026",
-      "kind": "Research presentation",
-      "place": "Ten precedents, 16th century - 2017",
-      "tools": "Image archive, annotated bibliography",
-      "hero": "images/screens/case-07.jpg",
-      "thumb": "images/screens/case-06.jpg",
-      "summary": "How can architectural screens make changes in sunlight visible through patterns of light and shadow? A study of ten screens from Ahmedabad to Abu Dhabi.",
-      "tags": [
-        "Research",
-        "Daylight",
-        "Facade",
-        "Precedent study"
-      ],
-      "lede": [
-        "A short research presentation on how buildings help us notice natural change and the passage of time. Each precedent is read through one variable: opening, scale, angle, surface, depth, movement or panel position.",
-        "The study ends with a test method for the studio: keep the screen fixed and move the lamp; keep the lamp fixed and change one screen variable at a time."
-      ],
-      "stats": [],
-      "blocks": "SCREENS",
-      "boards": [],
-      "note": "Precedent photographs are from the course image archive and are shown for academic research; credit belongs to the original photographers.",
-      "category": "Research"
+     "value": "Wood",
+     "label": "laser-cut physical model"
     }
-  ]
+   ],
+   "blocks": [
+    {
+     "id": "explode",
+     "no": "01",
+     "title": "Exploded model",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "explode",
+       "script": "assets/anim/clinton-hill.js",
+       "labels": [
+        "Roof",
+        "Level 4",
+        "Level 3",
+        "Level 2",
+        "Ground floor",
+        "Cellar library"
+       ],
+       "src": "assets/models/clinton-hill.js",
+       "caption": "The design model itself, scrolled apart floor by floor: cellar library, ground-floor civic core, three residential floors and the roof with its skylights. Glulam frame in timber tone, glazing translucent."
+      },
+      {
+       "kind": "explode",
+       "src": "images/clinton-hill/explode",
+       "caption": "Scroll to take the building apart: cellar library, ground-floor civic core, three residential floors and the roof with its skylights. Red lines trace the vertical circulation."
+      },
+      {
+       "kind": "explorer",
+       "id": "explore",
+       "model": "assets/models/clinton-hill.js",
+       "adapter": "assets/explore/clinton-hill.js",
+       "tools": [
+        "section",
+        "sun",
+        "paths"
+       ],
+       "lat": 40.6876,
+       "lon": -73.9663,
+       "north_deg": 90,
+       "site": "Washington Ave, Clinton Hill",
+       "default_sun": "2026-03-21T15:00",
+       "title": "Inside the stack",
+       "caption": "Slice the building in plan at any floor or in section, light it for any date on Washington Avenue, and follow library visitors down the reading stair and residents up the stair and elevator cores. Plan north follows the model's +Y axis, with Washington Avenue taken as running north-south."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "A day walking on light",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "A resident leaves her apartment on the third floor and steps onto a T-shaped field of structural glass. Sunlight from the skylight filters through the plates; below, a neighbour sorts laundry in the micro-lounge.",
+        "Downstairs the language shifts from home to civic room. The elevator and the grand reading bleachers give every visitor, with or without a stroller, the same view of the stacks."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/clinton-hill/render-skylight.jpg",
+       "caption": "The luminous corridor under the skylight."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/render-atrium.jpg",
+       "caption": "Library reading floor from above."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/render-reading.jpg",
+       "caption": "Reading bleachers around the civic core."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Site and plans",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The site on Washington Avenue sits between the Pratt campus, the brownstone blocks of Clinton Hill and the transit corridors to downtown Brooklyn. The site study maps its historical evolution and the axes that meet at the library door."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/clinton-hill/site-diagram.jpg",
+       "caption": "Site location, historical evolution and development phases."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/site-plan.jpg",
+       "caption": "Site plan."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/plans-ground-cellar.jpg",
+       "caption": "Ground floor and cellar: the library."
+      },
+      {
+       "kind": "full",
+       "src": "images/clinton-hill/plans-upper.jpg",
+       "caption": "Residential floors: two- and three-bedroom units around the luminous corridor."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Sections, elevations and construction",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/clinton-hill/section-b.jpg",
+       "caption": "Section B from the street: reading stair down to the cellar."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/section-a.jpg",
+       "caption": "Section A: light wells through the residential floors."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/elevations.jpg",
+       "caption": "Street elevations."
+      },
+      {
+       "kind": "text",
+       "text": [
+        "A glue-laminated timber frame carries cross-laminated timber slabs; the wall builds out from stud framing and mineral-wool insulation to a ventilated cladding. The exploded axonometric traces the vertical circulation through all five levels."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/clinton-hill/construction-detail.jpg",
+       "caption": "Wall and floor construction detail, 1/2\" = 1'-0\"."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/exploded-axon.jpg",
+       "caption": "Exploded axonometric."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/render-entrance.jpg",
+       "caption": "Library entrance."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/render-roof.jpg",
+       "caption": "Roof terrace and skylights."
+      }
+     ]
+    },
+    {
+     "no": "05",
+     "title": "Physical model",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "A laser-cut wood model of the whole building, built to be opened up: the facade, a cut-away unit, the light well and the library floor can all be read from outside."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/clinton-hill/model-01.jpg",
+       "caption": "Street elevation of the model."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/model-09.jpg",
+       "caption": "Ground-floor library and entrance terrace."
+      },
+      {
+       "kind": "half",
+       "src": "images/clinton-hill/model-08.jpg",
+       "caption": "Facade in perspective."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-00.jpg",
+       "caption": "Corner and roof."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-02.jpg",
+       "caption": "Cut-away unit."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-07.jpg",
+       "caption": "Looking down into the light well."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-04.jpg",
+       "caption": "Section through a unit."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-05.jpg",
+       "caption": "Stacked rooms seen through the openings."
+      },
+      {
+       "kind": "third",
+       "src": "images/clinton-hill/model-06.jpg",
+       "caption": "Section cut through two floors."
+      },
+      {
+       "kind": "full",
+       "src": "images/clinton-hill/model-03.jpg",
+       "caption": "Facade openings."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/clinton-hill/board-1.jpg",
+     "caption": "Board 1: site, narrative, plans"
+    },
+    {
+     "src": "images/clinton-hill/board-2.jpg",
+     "caption": "Board 2: construction, sections"
+    }
+   ],
+   "note": "",
+   "category": "Studio"
+  },
+  {
+   "slug": "between-levels",
+   "publish": true,
+   "no": "03",
+   "title": "Between Levels",
+   "year": "2026",
+   "kind": "Self-initiated architecture project",
+   "place": "Hillside neighbourhood (speculative)",
+   "tools": "Rhino 7, Python, CAD",
+   "hero": "images/between-levels/night-hero.jpg",
+   "thumb": "images/between-levels/night-hero.jpg",
+   "summary": "A common street across three levels: a hillside neighbourhood building where a shared stair-street, galleries and forty-eight public rooms connect streets 12 m apart.",
+   "tags": [
+    "Housing & community",
+    "Topography",
+    "Typology",
+    "Systems"
+   ],
+   "lede": [
+    "Three streets enter a sloping site at +0, +6 and +12 m. Instead of one building per street, two stepped wings on a 36 x 48 m grid share a continuous stair-street and covered galleries, so the building works as a public route as much as a container.",
+    "Twelve room types, from a repair shop to a reading lounge, are deployed as 48 rooms across five floors. Each was furnished for its actual width rather than copied and renamed."
+   ],
+   "stats": [
+    {
+     "value": "3",
+     "label": "street entrances"
+    },
+    {
+     "value": "5",
+     "label": "floor levels"
+    },
+    {
+     "value": "48",
+     "label": "public rooms, 12 types"
+    },
+    {
+     "value": "4,104 m²",
+     "label": "rooms, galleries and bridges"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "Building it up",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "grow",
+       "script": "assets/anim/between-levels.js",
+       "src": "assets/models/between-levels.js",
+       "labels": [
+        "Upper street +12 m",
+        "Middle lane +6 m",
+        "Lower street +0 m"
+       ],
+       "hint": "Scroll · drag to rotate",
+       "caption": "The building assembled from its own model: hillside and streets, frame, two stepped wings, forty-eight rooms coloured by type, and the shared stair-street that carries a public route uphill."
+      },
+      {
+       "kind": "explorer",
+       "id": "explore",
+       "model": "assets/models/between-levels.js",
+       "adapter": "assets/explore/between-levels.js",
+       "tools": [
+        "section",
+        "sun",
+        "paths"
+       ],
+       "lat": 40.7128,
+       "lon": -74.006,
+       "north_deg": 90,
+       "site": "Speculative site, sun for New York City",
+       "default_sun": "2026-10-15T16:00",
+       "title": "Walking up through the building",
+       "caption": "Cut through the stepped wings, light the slope through the year and follow people up the stair-street from the lower street to the upper one. The site is speculative: sun angles are computed for New York City, with the slope rising to the north."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "A street through the building",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Two stepped wings leave a planted stair-street between them. Galleries on every level open onto it, and two bridges cross it, so a resident can walk from the lower street to the upper one through public rooms."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/between-levels/cutaway-axon.jpg",
+       "caption": "Axonometric section of the inhabited public street."
+      },
+      {
+       "kind": "half",
+       "src": "images/between-levels/hero.jpg",
+       "caption": "Front aerial of the V05 model."
+      },
+      {
+       "kind": "half",
+       "src": "images/between-levels/roof-off-axon.jpg",
+       "caption": "Roof-off axonometric: rooms, galleries and stair-street."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Rooms and variants",
+     "items": [
+      {
+       "kind": "half",
+       "src": "images/between-levels/modules.jpg",
+       "caption": "Twelve room types."
+      },
+      {
+       "kind": "half",
+       "src": "images/between-levels/variants.jpg",
+       "caption": "Sixteen spatial variants, 2D and 3D matched."
+      },
+      {
+       "kind": "full",
+       "src": "images/between-levels/sections.jpg",
+       "caption": "Furnished sections of the room types."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/between-levels/board.jpg",
+     "caption": "Presentation board (A0)"
+    }
+   ],
+   "note": "",
+   "category": "Self-initiated"
+  },
+  {
+   "slug": "triangle-pavilions",
+   "publish": true,
+   "no": "04",
+   "title": "Triangle Commons",
+   "year": "Spring 2025",
+   "kind": "Sophomore studio · Multi-purpose building",
+   "place": "New York Botanical Garden, Bronx, NY",
+   "tools": "Rhino, rendering, Photoshop, physical model",
+   "hero": "images/triangle-pavilions/aerial-2.jpg",
+   "thumb": "images/triangle-pavilions/aerial-1.jpg",
+   "summary": "A multi-purpose building for the New York Botanical Garden: triangular pavilions on slender columns, rotated off one triangular grid, stepping down a slope to the water and bridging the road beside it.",
+   "tags": [
+    "Landscape",
+    "Public space",
+    "Light and shade",
+    "Topography"
+   ],
+   "lede": [
+    "A multi-purpose building for the New York Botanical Garden in the Bronx, on a slope between a road and the water. The site is first filled as a solid, then cut by a triangular grid. Triangles are aligned to the grid, duplicated and rotated, and the leftover gaps become a continuous route: up from the road, over a bridge, through the decks and down to the water.",
+    "Enclosed triangles hold a library, workspaces and a cafe deck with planted roofs. Between them, perforated dark canopies on a forest of thin white columns shade an open plaza, where the light changes from morning to afternoon."
+   ],
+   "stats": [],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "From grid to pavilions",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "unfold",
+       "script": "assets/anim/triangle-pavilions.js",
+       "src": "assets/models/triangle-pavilions.js",
+       "labels": [
+        "Perforated canopies",
+        "Library · green roof",
+        "Multipurpose classroom",
+        "Bridge pavilion"
+       ],
+       "hint": "Scroll · drag to rotate",
+       "caption": "A multipurpose building for the New York Botanical Garden: triangles drawn on a site grid, duplicated and rotated, then lifted above the garden on a forest of slender columns."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "Concept",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/concept.jpg",
+       "caption": "Concept: fill the site as a solid, divide it with a triangular grid, align the triangles, duplicate and rotate, refine the circulation."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/exploded-massing.jpg",
+       "caption": "Exploded massing: roofs, structure, program and routes."
+      },
+      {
+       "kind": "wide",
+       "src": "images/triangle-pavilions/aerial-1.jpg",
+       "caption": "Aerial view from the road, with the planted roof terrace and the bridge."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Light under the canopies",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The dark roof triangles are perforated, so the plaza below is lit by moving spots of sun. The three views follow the same space through a day."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/r-6am.jpg",
+       "caption": "6 am."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/r-12pm.jpg",
+       "caption": "12 pm."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/r-3pm.jpg",
+       "caption": "3 pm."
+      },
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/aerial-3.jpg",
+       "caption": "Aerial view over the pond."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Plans and sections",
+     "items": [
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/plan-ground.jpg",
+       "caption": "Ground floor plan."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/plan-second.jpg",
+       "caption": "Second floor plan."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/plan-roof.jpg",
+       "caption": "Roof plan."
+      },
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/sections.jpg",
+       "caption": "Site sections 1 and 2 across the slope."
+      },
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/wall-section.jpg",
+       "caption": "Wall section: stepped planters on the roof terrace and the floor build-up."
+      }
+     ]
+    },
+    {
+     "no": "05",
+     "title": "Inside the triangles",
+     "items": [
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/r-interior-library.jpg",
+       "caption": "Cut-away: workspace and library below, meeting room above."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/r-interior-deck.jpg",
+       "caption": "Cafe deck under a white canopy."
+      },
+      {
+       "kind": "wide",
+       "src": "images/triangle-pavilions/aerial-2.jpg",
+       "caption": "Aerial view: perforated canopies, planted roof and the bridge over the road."
+      }
+     ]
+    },
+    {
+     "no": "06",
+     "title": "Planting over time",
+     "items": [
+      {
+       "kind": "full",
+       "src": "images/triangle-pavilions/vignette.jpg",
+       "caption": "Vignettes after planting, at 3, 10 and 30 years."
+      }
+     ]
+    },
+    {
+     "no": "07",
+     "title": "Physical model",
+     "items": [
+      {
+       "kind": "wide",
+       "src": "images/triangle-pavilions/model-09.jpg",
+       "caption": "Site model: triangular roofs over contour layers."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-02.jpg",
+       "caption": "Roof plan view of the site model."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-01.jpg",
+       "caption": "Site model, street view."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-03.jpg",
+       "caption": "Decks and stairs on slender columns."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-04.jpg",
+       "caption": "Canopy and stair."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-05.jpg",
+       "caption": "Curved enclosure on columns."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-06.jpg",
+       "caption": "Stair up to the deck."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-07.jpg",
+       "caption": "The tower block."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-08.jpg",
+       "caption": "Under the canopy."
+      },
+      {
+       "kind": "third",
+       "src": "images/triangle-pavilions/model-10.jpg",
+       "caption": "Detail model: slabs, column and facade grid."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-12.jpg",
+       "caption": "Detail model: two floor plates on a single column."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-11.jpg",
+       "caption": "Detail model: slab edge and glazing."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-13.jpg",
+       "caption": "Detail model from below."
+      },
+      {
+       "kind": "half",
+       "src": "images/triangle-pavilions/model-14.jpg",
+       "caption": "Detail model: floor build-up and railing."
+      }
+     ]
+    }
+   ],
+   "boards": [],
+   "note": "",
+   "category": "Studio"
+  },
+  {
+   "slug": "architectural-screens",
+   "publish": false,
+   "no": "04",
+   "title": "Transforming Light",
+   "year": "2026",
+   "kind": "Research presentation",
+   "place": "Ten precedents, 16th century - 2017",
+   "tools": "Image archive, annotated bibliography",
+   "hero": "images/screens/case-07.jpg",
+   "thumb": "images/screens/case-06.jpg",
+   "summary": "How can architectural screens make changes in sunlight visible through patterns of light and shadow? A study of ten screens from Ahmedabad to Abu Dhabi.",
+   "tags": [
+    "Research",
+    "Daylight",
+    "Facade",
+    "Precedent study"
+   ],
+   "lede": [
+    "A short research presentation on how buildings help us notice natural change and the passage of time. Each precedent is read through one variable: opening, scale, angle, surface, depth, movement or panel position.",
+    "The study ends with a test method for the studio: keep the screen fixed and move the lamp; keep the lamp fixed and change one screen variable at a time."
+   ],
+   "stats": [],
+   "blocks": "SCREENS",
+   "boards": [],
+   "note": "Precedent photographs are from the course image archive and are shown for academic research; credit belongs to the original photographers.",
+   "category": "Research"
+  }
+ ]
 }

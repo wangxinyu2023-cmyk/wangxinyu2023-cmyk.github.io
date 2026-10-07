@@ -196,3 +196,6 @@ html.intro .pt{transform:none}
 .hero-sun{position:absolute;left:0;top:0;width:80vmax;height:80vmax;margin:-40vmax 0 0 -40vmax;pointer-events:none;opacity:0;transition:opacity .8s;will-change:transform;background:radial-gradient(circle,rgba(255,232,190,.26) 0,rgba(255,220,170,.1) 22%,rgba(255,210,160,0) 50%)}
 .hero:hover .hero-sun{opacity:1}
 .hero-phase{margin-left:10px;color:rgba(255,255,255,.7)}
+/* growth note under Selected work */
+.work-note{font-family:var(--sans);font-size:14.5px;line-height:1.6;color:var(--mute);max-width:46ch;margin:14px 0 0}
+@media (max-width:900px){.work-note{margin-top:10px}}
