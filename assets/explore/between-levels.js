@@ -60,13 +60,13 @@ XP.register('between-levels', ({ T, util }) => {
     unit: 'm', root,
     focus: [-12, -8, -1.2, 52, 56, 18.7],
     ground: 0,
-    levels: [0, 3, 6, 9, 12].map(z => ({ name: '+' + z + ' m', z })),
+    levels: [0, 3, 6, 9, 12].map(z => ({ name: '+' + z + '\u00a0m', z })),
     view: { yaw: .82, pitch: .62, pad: 1.0 },
     eye: { from: [18.4, -7, 1.6], to: [18, 20, 5], fov: 62 },
     gizmoScale: .7,
     paths: { scenarios: { route: { agents, routes: [R, B, [[9.5, 13.5, 9], [26.5, 13.5, 9]], [[9.5, 25.5, 12], [26.5, 25.5, 12]]],
       legend: [[0, 'Going up'], [1, 'Coming down'], [2, 'From the middle lane'], [3, 'Across the bridges']],
-      note: 'The stair-street climbs four 3 m cycles between the wings, with a planted landing on each; the middle lane joins it at +6 m and two bridges cross it at +9 and +12 m.' } },
+      note: 'The stair-street climbs four 3\u00a0m cycles between the wings, with a planted landing on each; the middle lane joins it at +6\u00a0m and two bridges cross it at +9 and +12\u00a0m.' } },
       colors: [0xc0704f, 0x55667a, 0xd0a54a, 0x7f9a5c] },
     sunNote: 'Speculative site: the sun is computed for New York City with the slope rising to the north (+Y).'
   };

@@ -10,14 +10,8 @@
   sec.classList.add('ready');
 
   const css = document.createElement('style');
+  // the step list itself is styled once for every project in fx.css (.m3-steps, with the .m3-d detail line)
   css.textContent = `
-.m3d[data-anim=grow] .m3-steps{list-style:none;margin:26px 0 0;padding:0;max-width:340px}
-.m3d[data-anim=grow] .m3-steps li{font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);padding:8px 0 7px;border-top:1px solid var(--line);transition:color .35s}
-.m3d[data-anim=grow] .m3-steps li i{font-style:normal;color:var(--line);margin-right:12px;transition:color .35s}
-.m3d[data-anim=grow] .m3-steps li span{display:block;font-size:14px;letter-spacing:0;text-transform:none;color:#33322e;line-height:1.45;max-height:0;opacity:0;overflow:hidden;transition:max-height .45s,opacity .45s,margin .45s}
-.m3d[data-anim=grow] .m3-steps li.done i,.m3d[data-anim=grow] .m3-steps li.on i{color:var(--accent)}
-.m3d[data-anim=grow] .m3-steps li.on{color:var(--ink)}
-.m3d[data-anim=grow] .m3-steps li.on span{max-height:64px;opacity:1;margin-top:5px}
 .bl-legend{position:absolute;left:0;top:0;max-width:100%;margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,auto);gap:5px 18px;pointer-events:none;font-family:var(--sans);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);opacity:0;transition:opacity .5s}
 .bl-legend.on{opacity:1}
 .bl-legend .hd{grid-column:1/-1;color:var(--mute);margin-bottom:4px}
@@ -30,11 +24,8 @@
 .m3d[data-anim=grow] .ex-labels li{background:rgba(245,244,239,.88);padding-left:6px}
 .m3d[data-anim=grow] .ex-labels li i{color:var(--accent)}
 @media (max-width:900px){
- .m3d[data-anim=grow] .m3-steps{margin-top:14px}
- .m3d[data-anim=grow] .m3-steps li{display:none;border-top:0;padding:0}
- .m3d[data-anim=grow] .m3-steps li.on{display:block}
- .m3d[data-anim=grow] .m3-steps li span{font-size:13px}
- .bl-legend{grid-template-columns:repeat(3,auto);gap:3px 10px;font-size:8.5px;letter-spacing:.06em}
+ .m3-stage .bl-legend{top:auto;bottom:4px}
+ .bl-legend{grid-template-columns:repeat(3,auto);gap:3px 10px;font-size:10px;letter-spacing:.04em}
  .bl-legend .hd{margin-bottom:1px}
  .bl-legend li b{width:8px;height:8px}
  .bl-legend .l{display:none}.bl-legend .s{display:inline}
@@ -47,7 +38,9 @@
     if (o) { if (o.dataset.ok) ok(); else { o.addEventListener('load', ok); o.addEventListener('error', no); } return; }
     const s = document.createElement('script'); s.src = u; s.onload = () => { s.dataset.ok = 1; ok(); }; s.onerror = no; document.head.appendChild(s); });
   let started = false;
-  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(e => { console.error(e); sec.classList.add('failed'); }); };
+  // on failure the section collapses to its caption and says what to do, instead of leaving screens of empty scroll
+  const fail = e => { if (e) console.error(e); sec.classList.add('failed'); const w = sec.querySelector('.m3-wait'); if (w) w.textContent = 'The 3D model didn\u2019t load. Reload the page to try again.'; };
+  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(fail); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
   // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
   if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
@@ -59,10 +52,10 @@
     ['M07', 'Quiet study', 0x6b9cc0, 'Quiet study'], ['M08', 'Meeting room', 0x5a6ca6, 'Meeting'], ['M09', 'Shared workspace', 0x8a72ab, 'Workspace'],
     ['M10', 'Community dining', 0xc47893, 'Dining'], ['M11', 'Reading lounge', 0x9e5468, 'Lounge'], ['M12', 'WC + service', 0x9a958c, 'WC']];
   const STEPS = [
-    ['Terrain and streets', 'Three streets meet the slope at +0, +6 and +12 m.'],
-    ['Structural grid', 'A 36 × 48 m frame: two 12 m wings on 6 m bays.'],
-    ['Stepped wings', 'Both wings climb the hill one 3 m level at a time.'],
-    ['48 public rooms', 'Twelve room types, each furnished for its actual width.'],
+    ['Terrain and streets', 'Three streets meet the slope at +0, +6 and +12\u00a0m.'],
+    ['Structural grid', 'A 36 × 48\u00a0m frame: two 12\u00a0m wings on 6\u00a0m bays.'],
+    ['Stepped wings', 'Both wings climb the hill one 3\u00a0m level at a time.'],
+    ['48 public rooms', '12 room types, each furnished for its actual width.'],
     ['Shared ground', 'Covered galleries, the planted stair-street and two bridges.'],
     ['A public route', 'From the lower street to the upper one, through the building.']];
   // timeline (scroll progress p)
@@ -72,7 +65,7 @@
     const T = window.THREE, M = window.BL_MODEL, stage = sec.querySelector('.m3-stage');
     const labels = [...sec.querySelectorAll('.ex-labels li')], bar = sec.querySelector('.ex-bar span');
     const stepsOl = sec.querySelector('.m3-steps');
-    const steps = STEPS.map((s, i) => { const li = document.createElement('li'); li.innerHTML = '<i>' + String(i + 1).padStart(2, '0') + '</i>' + s[0] + '<span>' + s[1] + '</span>'; stepsOl && stepsOl.appendChild(li); return li; });
+    const steps = STEPS.map((s, i) => { const li = document.createElement('li'); li.innerHTML = '<i>' + String(i + 1).padStart(2, '0') + '</i><span>' + s[0] + '<span class="m3-d">' + s[1] + '</span></span>'; stepsOl && stepsOl.appendChild(li); return li; });
     const legend = document.createElement('ol'); legend.className = 'bl-legend';
     legend.innerHTML = '<div class="hd">48 rooms · 12 types</div>' + TYPES.map(t => '<li><b style="background:#' + t[2].toString(16).padStart(6, '0') + '"></b><span class=l>' + t[1] + '</span><span class=s>' + t[3] + '</span> <em>0</em></li>').join('');
     const mq = matchMedia('(max-width:900px)'), copy = sec.querySelector('.ex-copy');
@@ -189,6 +182,13 @@
     stage.addEventListener('pointermove', e => { if (!drag) return; yawOff = drag[2] - (e.clientX - drag[0]) * .008; pitchOff = Math.min(.6, Math.max(-.45, drag[3] + (e.clientY - drag[1]) * .005)); frame(); });
     const end = () => { drag = null; stage.classList.remove('grab'); };
     stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+    // keyboard alternative to dragging: the stage takes focus once the model is here; arrow keys turn it
+    stage.tabIndex = 0; stage.setAttribute('role', 'application'); stage.setAttribute('aria-roledescription', '3D model');
+    stage.setAttribute('aria-label', ((sec.querySelector('.ex-hint') || {}).textContent || '3D model') + '. Arrow keys turn it.');
+    stage.addEventListener('keydown', e => {
+      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+      e.preventDefault(); yawOff -= d[0] * .15; pitchOff = Math.min(.6, Math.max(-.45, pitchOff + d[1] * .08)); frame();
+    });
 
     const clamp = x => Math.min(1, Math.max(0, x));
     const seg01 = (p, a, b) => clamp((p - a) / (b - a));
@@ -196,15 +196,24 @@
     const eout = t => 1 - Math.pow(1 - t, 3);
     const back = t => { const c = 1.9; return t <= 0 ? 0 : 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
     const fp = new URLSearchParams(location.search).get('explode');
-    let W = 0, H = 0, P = 0;
-    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); };
+    let W = 0, H = 0, P = 0, top = 0, span = 1, gut = 0;
+    // geometry (section offset, label gutter) is measured on resize / layout change, never inside the frame
+    let legH = 0;    // phones: the legend sits at the foot of the stage; the model is fitted into the space above it
+    const measure = () => { top = sec.getBoundingClientRect().top + scrollY; span = Math.max(1, sec.offsetHeight - innerHeight); gut = labels.length && labels[0].offsetParent ? 170 : 0;
+      legH = legend.parentNode === stage ? legend.offsetHeight + 10 : 0; };
+    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); measure(); };
+    labels.forEach(li => { li.style.top = '0'; });
+    const legPrev = new Array(12).fill(-1); let legOn = null, stepCur = -2;
+    const walk = { t0: 0, u: 0, done: false };
     const box = (xa, xb, ya, yb) => { const o = []; [xa, xb].forEach(x => [ya, yb].forEach(y => [-1, 18.7].forEach(z => o.push(V3(x, y, z))))); return o; };
     const FIT_A = box(-12, 52, -8, 56), FIT_B = box(-5, 44, -7, 55), FIT = FIT_A.map(c => c.clone());
     const tgt = V3(18, 24, 7), v = new T.Vector3();
+    // per-frame cost: only groups (levels, rooms, roof, trees) and the walking light move; every other object keeps a
+    // fixed local matrix, so three.js does not recompose hundreds of matrices on each scroll frame
+    scene.traverse(o => { if (!o.isGroup && !o.isScene && o !== head && o !== headHalo) { o.updateMatrix(); o.matrixAutoUpdate = false; } });
 
     function frame(time) {
-      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
-      let p = clamp(-r.top / Math.max(1, span));
+      let p = clamp((scrollY - top) / span);
       if (reduce) p = 1;
       if (fp !== null) p = +fp;
       P = p;
@@ -230,8 +239,8 @@
         rm.vol.material.opacity = fade;
         if (t > .5) counts[rm.ty]++;
       });
-      legend.classList.toggle('on', p > PH[3] - .01);
-      legLi.forEach((li, i) => { li.classList.toggle('on', counts[i] > 0); legCount[i].textContent = counts[i]; });
+      const lo = p > PH[3] - .01; if (lo !== legOn) { legOn = lo; legend.classList.toggle('on', lo); }
+      counts.forEach((c, i) => { if (c !== legPrev[i]) { legPrev[i] = c; legLi[i].classList.toggle('on', c > 0); legCount[i].textContent = c; } });   // DOM writes only on change
       // 5 galleries sweep uphill, stair-street climbs, bridges span
       const sweep = (g, a, b, from, to) => { if (!groups[g]) return; const t = eio(seg01(p, a, b)); clip[g].constant = from + (to - from) * t; groups[g].visible = t > 0; };
       sweep('gallery', PH[4], PH[4] + .07, -1, 49);
@@ -243,12 +252,17 @@
       const rt = eio(seg01(p, PH[5], PH[5] + .12)), bt = eio(seg01(p, PH[5] + .07, PH[5] + .15));
       draw(route, rt); draw(routeHalo, rt); draw(branch, bt); draw(branchHalo, bt);
       head.visible = headHalo.visible = rt > 0;
+      if (rt < 1) { walk.t0 = 0; walk.done = false; walk.u = 0; }
       if (rt > 0) {
-        let u = rt;
-        if (rt >= 1 && time && !reduce) u = (time / 9000) % 1; // after arrival, a light keeps walking the route
-        head.position.copy(route.userData.curve.getPointAt(Math.min(.999, u)));
+        let u = rt, pulse = 0;
+        if (rt >= 1 && !reduce && fp === null) {       // after arrival a light walks the route once (5 s), then rests at the top
+          if (!walk.done && time) { if (!walk.t0) walk.t0 = time; walk.u = Math.min(1, Math.max(0, (time - walk.t0) / 5000)); if (walk.u >= 1) walk.done = true; pulse = Math.sin(time / 260); }
+          u = walk.done ? 1 : walk.u;
+        }
+        // rAF and performance.now() timestamps can disagree by a frame, so u may dip below 0; getPointAt needs 0..1
+        head.position.copy(route.userData.curve.getPointAt(Math.min(.999, Math.max(0, u))));
         headHalo.position.copy(head.position);
-        headHalo.scale.setScalar(1 + .18 * Math.sin((time || 0) / 260));
+        headHalo.scale.setScalar(1 + .18 * pulse);
       }
       // camera: slow scroll-linked turn + user drag, fitted to the site
       const ep = eio(p), yaw = .82 - .5 * ep + yawOff, pitch = Math.min(1.3, Math.max(.2, .58 + .2 * ep + pitchOff));
@@ -258,33 +272,41 @@
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
       FIT.forEach(c => { v.copy(c).applyMatrix4(cam.matrixWorldInverse); x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y); });
       // keep the model clear of the street labels on the right (desktop) and the legend below (mobile)
-      const mob = W < 600, gut = labels.length && labels[0].offsetParent ? 170 : 0, Wa = Math.max(100, W - gut), asp = Wa / Math.max(1, H);
-      const mx = mob ? .86 : 1.04, my = mob ? 1.12 : 1.06;
+      const mob = W < 600, Wa = Math.max(100, W - gut), Ha = Math.max(100, H - (mob ? legH : 0)), asp = Wa / Ha;
+      // the whole model always fits (no crop at the sides); on phones it hangs from the top of the stage, right under the
+      // step text, and stays clear of the legend at the foot of the stage
+      const mx = 1.04, my = mob ? 1.08 : 1.06;
       let hw = (x1 - x0) / 2 * mx, hh = (y1 - y0) / 2 * my;
       if (hw / hh > asp) hh = hw / asp; else hw = hh * asp;
-      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 + (mob ? (y1 - y0) * .06 : 0);
-      cam.left = cx - hw; cam.right = cx + hw + hw * 2 * gut / Wa; cam.top = cy + hh; cam.bottom = cy - hh; cam.updateProjectionMatrix();
+      const cx = (x0 + x1) / 2, cy = mob ? y1 + (y1 - y0) * .04 - hh : (y0 + y1) / 2;
+      const ext = mob ? H / Ha : 1;     // the camera spans the whole stage; the fitted box covers its upper Ha pixels
+      cam.left = cx - hw; cam.right = cx + hw + hw * 2 * gut / Wa; cam.top = cy + hh; cam.bottom = cy + hh - 2 * hh * ext; cam.updateProjectionMatrix();
       renderer.render(scene, cam);
       // street labels pinned to each street's east end; step list; progress bar
       labels.forEach((li, i) => {
         const s = streetTop[2 - i]; v.copy(V3(s[0], s[1], s[2])).project(cam);
-        li.style.top = ((1 - v.y) / 2 * 100).toFixed(2) + '%';
+        li.style.transform = 'translate3d(0,' + ((1 - v.y) / 2 * H).toFixed(1) + 'px,0) translateY(-50%)';
         li.classList.toggle('on', p < PH[3] + .04 || p > PH[5]);
       });
       const cur = PH.findIndex((a, i) => p >= a && p < PH[i + 1]);
-      steps.forEach((li, i) => { li.classList.toggle('on', i === Math.min(5, cur)); li.classList.toggle('done', i < cur); });
-      bar.style.width = (p * 100).toFixed(1) + '%';
+      if (cur !== stepCur) { stepCur = cur; steps.forEach((li, i) => { li.classList.toggle('on', i === Math.min(5, cur)); li.classList.toggle('done', i < cur); }); }
+      bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      if (rt >= 1 && !walk.done && vis && !loopRaf && !reduce && fp === null) loopRaf = requestAnimationFrame(loop);
     }
+    // the walking light runs only while the section is on screen, the tab is visible and the walk is unfinished
+    let vis = false, loopRaf = 0;
+    function loop(t) { loopRaf = 0; if (!vis || document.hidden || drag || walk.done) return; frame(t); }
+    new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; if (vis) frame(performance.now()); }).observe(sec);
+    // glass and the see-through room volumes (transparent, double-sided) draw in one pass: three.js would otherwise draw each
+    // twice and flag its material for a program re-check on every frame (≈23,000 re-checks per 500 frames before this)
+    scene.traverse(o => { [].concat(o.material || []).forEach(m => { if (m.side === T.DoubleSide) m.forceSinglePass = true; }); });
     size(); frame();
-    let sRaf = 0; addEventListener('scroll', () => { if (sRaf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
+    // compile every shader now (idle time, before the reader scrolls) instead of on the first frame each part appears
+    try { renderer.compile(scene, cam); } catch (e) {}
+    const near =() => scrollY + innerHeight > top - 80 && scrollY < top + span + innerHeight + 80;
+    let sRaf = 0; addEventListener('scroll', () => { if (sRaf || !near()) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
-    // once the route is complete, keep a light walking it while the section is on screen
-    if (!reduce && fp === null) {
-      let vis = false;
-      new IntersectionObserver(es => { vis = es[0].isIntersecting; }).observe(sec);
-      const loop = t => { if (vis && P > PH[5] + .12 && !drag) frame(t); requestAnimationFrame(loop); };
-      requestAnimationFrame(loop);
-    }
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(document.body);
     sec.classList.add('loaded');
   }
 })();

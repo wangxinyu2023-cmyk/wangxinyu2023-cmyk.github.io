@@ -10,13 +10,9 @@
   if (!gl) { sec.remove(); return; }
   sec.classList.add('ready');
 
+  // the step list is styled once for every project in fx.css (.m3-steps); only the sun clock is specific to this story
   const css = document.createElement('style');
-  css.textContent = '[data-anim="deploy"] .m3-steps{list-style:none;margin-top:26px;max-width:340px;font-family:var(--sans);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}' +
-    '[data-anim="deploy"] .m3-steps li{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);opacity:.5;transition:opacity .35s,color .35s}' +
-    '[data-anim="deploy"] .m3-steps li i{font-style:normal;color:var(--accent);min-width:18px}' +
-    '[data-anim="deploy"] .m3-steps li.done{opacity:.75}[data-anim="deploy"] .m3-steps li.on{opacity:1;color:var(--ink)}' +
-    '[data-anim="deploy"] .osb-clock{position:absolute;left:0;top:4px;pointer-events:none;opacity:0;transition:opacity .4s}[data-anim="deploy"] .osb-clock b{font-weight:400;color:var(--ink);margin-left:10px;font-size:13px;letter-spacing:.08em}[data-anim="deploy"] .osb-clock svg{display:block;margin-top:6px}' +
-    '@media (max-width:900px){[data-anim="deploy"] .m3-steps{margin-top:14px}[data-anim="deploy"] .m3-steps li{display:none}[data-anim="deploy"] .m3-steps li.on{display:flex;border-top:0;padding:0}}';
+  css.textContent = '[data-anim="deploy"] .osb-clock{position:absolute;left:0;top:4px;pointer-events:none;opacity:0;transition:opacity .4s}[data-anim="deploy"] .osb-clock b{font-weight:400;color:var(--ink);margin-left:10px;font-size:13px;letter-spacing:.08em}[data-anim="deploy"] .osb-clock svg{display:block;margin-top:6px}';
   document.head.appendChild(css);
 
   const up = sec.dataset.up || '';
@@ -25,7 +21,9 @@
     if (o) { if (o.dataset.ok) ok(); else { o.addEventListener('load', ok); o.addEventListener('error', no); } return; }
     const s = document.createElement('script'); s.src = u; s.onload = () => { s.dataset.ok = 1; ok(); }; s.onerror = no; document.head.appendChild(s); });
   let started = false;
-  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(e => { console.error(e); sec.classList.add('failed'); }); };
+  // on failure the section collapses to its caption and says what to do, instead of leaving screens of empty scroll
+  const fail = e => { if (e) console.error(e); sec.classList.add('failed'); const w = sec.querySelector('.m3-wait'); if (w) w.textContent = 'The 3D model didn\u2019t load. Reload the page to try again.'; };
+  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(fail); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
   // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
   if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
@@ -33,7 +31,7 @@
 
   // story beats (scroll progress p in 0..1)
   const STEPS = [[0, 'Arrives folded on its casters'], [.05, 'Outriggers swing out, planted ballast drops in'], [.13, 'Mast telescopes, bamboo wings unfold, reed skin stretches'],
-    [.275, 'Top lifts to market-table height'], [.36, "Farmers' market: 15 units fill the plaza"], [.6, 'Daily mode: 10 units become shaded benches'], [.79, 'Shade through a July day']];
+    [.275, 'Top lifts to market-table height'], [.36, 'Farmers’ market: 15 units fill the plaza'], [.6, 'Daily mode: 10 units become shaded benches'], [.79, 'Shade through a July day']];
 
   function init() {
     const T = window.THREE, M = window.OSBORN_MODEL, stage = sec.querySelector('.m3-stage');
@@ -220,7 +218,8 @@
       '<line x1="2" y1="40" x2="138" y2="40" stroke="#d9d6cd"/><path d="' + dpath + '" fill="none" stroke="#8a6a3f" stroke-width="1" stroke-dasharray="2 2"/>' +
       '<circle r="4" fill="#e3ad4f"/></svg>';
     const clockT = clock.querySelector('b'), dot = clock.querySelector('circle');
-    const hh = h => { const H = Math.floor(h), m = Math.round((h - H) * 60 / 15) * 15; return (m === 60 ? H + 1 : H) + ':' + String(m % 60).padStart(2, '0'); };
+    const hhF = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' });
+    const hh = h => hhF.format(Date.UTC(2000, 0, 1, 0, Math.round(h * 4) * 15));   // quarter hours, e.g. 14:15
 
     // ---------------- camera: axonometric, drag to orbit (adds to the scripted view)
     let dyaw = 0, dpitch = 0, drag = null;
@@ -228,10 +227,21 @@
     stage.addEventListener('pointermove', e => { if (!drag) return; dyaw = drag[2] - (e.clientX - drag[0]) * .008; dpitch = clamp(drag[3] + (e.clientY - drag[1]) * .005, -.4, .5); frame(); });
     const end = () => { drag = null; stage.classList.remove('grab'); };
     stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+    // keyboard alternative to dragging: the stage takes focus once the model is here; arrow keys turn it
+    stage.tabIndex = 0; stage.setAttribute('role', 'application'); stage.setAttribute('aria-roledescription', '3D model');
+    stage.setAttribute('aria-label', ((sec.querySelector('.ex-hint') || {}).textContent || '3D model') + '. Arrow keys turn it.');
+    stage.addEventListener('keydown', e => {
+      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+      e.preventDefault(); dyaw -= d[0] * .15; dpitch = clamp(dpitch + d[1] * .08, -.4, .5); frame();
+    });
 
     const fp = new URLSearchParams(location.search).get('explode');
-    let W = 0, H = 0;
-    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); };
+    let W = 0, H = 0, top = 0, span = 1;
+    // section geometry is measured on resize / layout change, never inside the scroll frame
+    const measure = () => { top = sec.getBoundingClientRect().top + scrollY; span = Math.max(1, sec.offsetHeight - innerHeight); };
+    let clockH = 60;    // the sun clock in the stage's top-left corner: the fitted plaza keeps clear of it
+    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); clockH = clock.offsetHeight + 12 || 60; measure(); };
+    labels.forEach(li => { li.style.top = '0'; });
     const tgt = new T.Vector3(), lerp = (a, b, k) => a + (b - a) * k;
     const heroW = new T.Vector3(hx, 3.4, -hy);              // three coords of the hero unit
     // fit the site tile (plinth bottom to tree tops) into the view; returns target (three coords) + half height
@@ -243,7 +253,7 @@
       rgt.crossVectors(fwd, Y).normalize(); upv.crossVectors(rgt, fwd).normalize();
       let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
       corners.forEach(c => { const a = c.dot(rgt), b = c.dot(upv); x0 = Math.min(x0, a); x1 = Math.max(x1, a); y0 = Math.min(y0, b); y1 = Math.max(y1, b); });
-      const top = narrow ? .05 : .07;                                  // headroom for the clock
+      const top = Math.min(.3, Math.max(narrow ? .05 : .07, clockH / Math.max(1, H)));   // headroom for the clock
       let half = Math.max((y1 - y0) / 2 / (1 - top), (x1 - x0) / 2 / asp) * 1.03;
       mid.copy(rgt).multiplyScalar((x0 + x1) / 2).addScaledVector(upv, (y0 + y1) / 2 + half * top);
       const c = mid.clone().addScaledVector(fwd, (4 - mid.y) / fwd.y);  // slide along the view line onto the plaza (ortho: same image)
@@ -251,8 +261,7 @@
     };
     const anchorsY = [];
     function frame() {
-      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
-      let p = clamp(-r.top / Math.max(1, span));
+      let p = clamp((scrollY - top) / span);
       if (reduce) p = 1;
       if (fp !== null) p = clamp(+fp);
       const k = ramp(p, .355, .15);                            // hero close-up -> plaza
@@ -315,7 +324,7 @@
       const sc = sun.shadow.camera; sc.left = -sh; sc.right = sh; sc.top = sh; sc.bottom = -sh; sc.near = 1; sc.far = 700; sc.updateProjectionMatrix();
       sun.intensity = 2.1 * clamp(sdir.z * 6, .25, 1) * kb + 2.1 * (1 - kb);
       const pv = ramp(p, .79, .03);
-      clock.style.opacity = pv; clockT.textContent = hh(hour);
+      clock.style.opacity = pv; const hts = hh(hour); if (clockT.textContent !== hts) clockT.textContent = hts;
       const [dx, dy] = dialXY(hour); dot.setAttribute('cx', dx.toFixed(1)); dot.setAttribute('cy', dy.toFixed(1));
 
       renderer.render(scene, cam);
@@ -325,16 +334,23 @@
       const on = [sp('skin', hd) > .4, sp('fold', hd) > .3, sp('lift', hd) > .3, ht > .2, sp('ballast', hd) > .5, sp('legs', hd) > .3].map(b => b && p < .37);
       const ys = labels.map((li, i) => i < anchorsY.length ? { li, i, y: (1 - anchorsY[i].clone().project(cam).y) / 2 * H } : null).filter(Boolean).sort((a, b) => a.y - b.y);
       for (let i = 1; i < ys.length; i++) ys[i].y = Math.max(ys[i].y, ys[i - 1].y + 22);
-      ys.forEach(o => { o.li.style.top = (o.y / Math.max(1, H) * 100).toFixed(2) + '%'; o.li.classList.toggle('on', !!on[o.i]); });
+      ys.forEach(o => { o.li.style.transform = 'translate3d(0,' + o.y.toFixed(1) + 'px,0) translateY(-50%)'; o.li.classList.toggle('on', !!on[o.i]); });
 
       let cur = 0; STEPS.forEach((s, i) => { if (p >= s[0]) cur = i; });
       steps.forEach((li, i) => { li.classList.toggle('on', i === cur); li.classList.toggle('done', i < cur); });
-      bar.style.width = (p * 100).toFixed(1) + '%';
+      bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
     }
+    // see-through double-sided parts (tree crowns, the fading ground) draw in one pass: three.js would otherwise draw them
+    // twice and flag the material for a program re-check on every frame
+    scene.traverse(o => { [].concat(o.material || []).forEach(m => { if (m.side === T.DoubleSide) m.forceSinglePass = true; }); });
     size(); frame();
+    // compile every shader now (idle time, before the reader scrolls) instead of on the first frame each part appears
+    try { renderer.compile(scene, cam); } catch (e) {}
     let raf = 0;
-    addEventListener('scroll', () => { if (raf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; raf = requestAnimationFrame(() => { raf = 0; frame(); }); }, { passive: true });
+    const near = () => scrollY + innerHeight > top - 80 && scrollY < top + span + innerHeight + 80;
+    addEventListener('scroll', () => { if (raf || !near()) return; raf = requestAnimationFrame(() => { raf = 0; frame(); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(document.body);
     sec.classList.add('loaded');
   }
 })();

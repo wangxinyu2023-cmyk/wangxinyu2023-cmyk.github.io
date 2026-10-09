@@ -10,18 +10,14 @@
   sec.classList.add('ready');
 
   // step list (mirrors the student's concept diagram) + its styling
-  const STEPS = ['Fill the site as solid', 'Divide the site with axes', 'Align the triangles', 'Duplicate and rotate', 'Refine the circulation', 'Lift into the garden'];
+  // the same words as the design-process row and the concept diagram; the list is styled once for every project in fx.css
+  const STEPS = ['Fill the site as a solid', 'Divide the site with axes', 'Align the triangles', 'Duplicate and rotate', 'Refine the circulation', 'Lift into the garden'];
   const AT = [0, .04, .16, .32, .46, .6];
   const css = document.createElement('style');
-  css.textContent = '.m3-steps{list-style:none;margin:22px 0 0;padding:0;max-width:340px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase}' +
-    '.m3-steps li{display:flex;gap:12px;padding:8px 0;border-top:1px solid var(--line);color:var(--mute);opacity:.55;transition:opacity .35s,color .35s}' +
-    '.m3-steps li:last-child{border-bottom:1px solid var(--line)}.m3-steps li i{font-style:normal;color:inherit;min-width:18px}' +
-    '.m3-steps li.on{opacity:1;color:var(--ink)}.m3-steps li.cur i{color:#c8321f}' +
-    '.m3d[data-anim="unfold"] .m3-stage .ex-labels{left:0;right:0;width:auto}' +
+  css.textContent = '.m3d[data-anim="unfold"] .m3-stage .ex-labels{left:0;right:0;width:auto}' +
     '.m3d[data-anim="unfold"] .m3-stage .ex-labels li{width:auto;transform:translate(26px,-50%);border:0;padding:3px 7px;background:rgba(245,244,239,.86);transition:opacity .5s}' +
     '.m3d[data-anim="unfold"] .m3-stage .ex-labels li::before{content:"";position:absolute;right:100%;top:50%;width:21px;height:1px;background:var(--ink)}' +
-    '.m3d[data-anim="unfold"] .m3-stage .ex-labels li::after{content:"";position:absolute;left:-29px;top:calc(50% - 3px);width:6px;height:6px;border-radius:50%;background:#c8321f}' +
-    '@media (max-width:900px){.m3-steps{margin-top:12px}.m3-steps li{display:none;border:0;padding:0}.m3-steps li.cur{display:flex}.m3-steps li:last-child{border:0}}';
+    '.m3d[data-anim="unfold"] .m3-stage .ex-labels li::after{content:"";position:absolute;left:-29px;top:calc(50% - 3px);width:6px;height:6px;border-radius:50%;background:#c8321f}';
   document.head.appendChild(css);
   const stepList = sec.querySelector('.m3-steps');
   const stepLis = STEPS.map((s, i) => { const li = document.createElement('li'); li.innerHTML = '<i>' + String(i + 1).padStart(2, '0') + '</i><span>' + s + '</span>'; if (stepList) stepList.appendChild(li); return li; });
@@ -32,7 +28,9 @@
     if (o) { if (o.dataset.ok) ok(); else { o.addEventListener('load', ok); o.addEventListener('error', no); } return; }
     const s = document.createElement('script'); s.src = u; s.onload = () => { s.dataset.ok = 1; ok(); }; s.onerror = no; document.head.appendChild(s); });
   let started = false;
-  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(() => sec.classList.add('failed')); };
+  // on failure the section collapses to its caption and says what to do, instead of leaving screens of empty scroll
+  const fail = e => { if (e) console.error(e); sec.classList.add('failed'); const w = sec.querySelector('.m3-wait'); if (w) w.textContent = 'The 3D model didn\u2019t load. Reload the page to try again.'; };
+  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(fail); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
   // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
   if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
@@ -299,10 +297,20 @@
     stage.addEventListener('pointermove', e => { if (!drag) return; uYaw = drag[2] - (e.clientX - drag[0]) * .008; uPitch = drag[3] + (e.clientY - drag[1]) * .005; idle = 0; frame(); });
     const end = () => { drag = null; stage.classList.remove('grab'); };
     stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+    // keyboard alternative to dragging (this project has no explorer below): the stage takes focus once the model is here
+    stage.tabIndex = 0; stage.setAttribute('role', 'application'); stage.setAttribute('aria-roledescription', '3D model');
+    stage.setAttribute('aria-label', ((sec.querySelector('.ex-hint') || {}).textContent || '3D model') + '. Arrow keys turn it.');
+    stage.addEventListener('keydown', e => {
+      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+      e.preventDefault(); uYaw -= d[0] * .15; uPitch += d[1] * .08; idle = 0; frame();
+    });
 
     const fp = new URLSearchParams(location.search).get('explode');
-    let Wpx = 0, Hpx = 0;
-    const size = () => { Wpx = stage.clientWidth; Hpx = stage.clientHeight; renderer.setSize(Wpx, Hpx, false); };
+    let Wpx = 0, Hpx = 0, top = 0, span = 1, P = 0;
+    // section geometry is measured on resize / layout change, never inside the scroll frame
+    const measure = () => { top = sec.getBoundingClientRect().top + scrollY; span = Math.max(1, sec.offsetHeight - innerHeight); };
+    const size = () => { Wpx = stage.clientWidth; Hpx = stage.clientHeight; renderer.setSize(Wpx, Hpx, false); measure(); };
+    labels.forEach(li => { li.style.left = '0'; li.style.top = '0'; });
     const mtx = new T.Matrix4(), qI = new T.Quaternion(), vP = new T.Vector3(), vS = new T.Vector3(), v = new T.Vector3();
     const white = new T.Color(1, 1, 1);
     const TOPZ = 26, HILL = -6;
@@ -320,8 +328,7 @@
     const anchors = [() => [tris.c1.t.centre, 16], () => [tris.lib_roof.t.centre, 20.5], () => [vtx('mp_roof', 0), 22], () => [vtx('s_roof', 1), 12.5], () => [M.walkways[0].pts[1], 0], () => [tris.c8.t.centre, 15]];
 
     function frame() {
-      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
-      let p = clamp(-r.top / Math.max(1, span));
+      let p = clamp((scrollY - top) / span);
       if (reduce) p = 1;
       if (fp !== null) p = clamp(+fp);
 
@@ -431,25 +438,38 @@
 
       // --- UI ---
       const cur = AT.reduce((a, t, i) => p >= t ? i : a, 0);
-      stepLis.forEach((li, i) => { li.classList.toggle('on', i <= cur); li.classList.toggle('cur', i === cur); });
+      stepLis.forEach((li, i) => { li.classList.toggle('on', i === cur); li.classList.toggle('done', i < cur); });
       const onL = p > .92;
       labels.forEach((li, i) => {
         const a = anchors[i % anchors.length](); v.set(wx(a[0][0]), wy(a[1]), wz(a[0][1])).project(cam);
-        li.style.left = ((v.x + 1) / 2 * 100).toFixed(2) + '%'; li.style.top = ((1 - v.y) / 2 * 100).toFixed(2) + '%';
+        li.style.transform = 'translate3d(' + ((v.x + 1) / 2 * Wpx).toFixed(1) + 'px,' + ((1 - v.y) / 2 * Hpx).toFixed(1) + 'px,0) translate(26px,-50%)';
         li.classList.toggle('on', onL);
       });
-      if (bar) bar.style.width = (p * 100).toFixed(1) + '%';
-      sec.dataset.p = p.toFixed(3);
+      if (bar) bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      P = p;
     }
+    // see-through double-sided parts (glass, rails, the route) draw in one pass: no second pass, no per-frame program re-check
+    scene.traverse(o => { [].concat(o.material || []).forEach(m => { if (m.side === T.DoubleSide) m.forceSinglePass = true; }); });
     size(); frame();
-    let sRaf = 0; addEventListener('scroll', () => { if (sRaf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
+    // compile every shader now (idle time, before the reader scrolls) instead of on the first frame each part appears
+    try { renderer.compile(scene, cam); } catch (e) {}
+    const near = () => scrollY + innerHeight > top - 80 && scrollY < top + span + innerHeight + 80;
+    let sRaf = 0; addEventListener('scroll', () => { if (sRaf || !near()) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); if (P > .97) start(); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
-    if (!reduce && fp === null) {
-      let vis = false;
-      new IntersectionObserver(es => { vis = es[0].isIntersecting; }).observe(sec);
-      const spin = () => { if (vis && !drag && ++idle > 120 && +sec.dataset.p > .97) { uYaw += .0012; frame(); } requestAnimationFrame(spin); };
-      spin();
-    }
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(document.body);
+    // slow turntable once the model is built: at most 5 s per visit, no loop while off-screen or hidden
+    let vis = false, spinRaf = 0, budget = 0, lastT = 0;
+    const spin = t => {
+      spinRaf = 0;
+      if (!vis || document.hidden || P <= .97) return;
+      const dt = lastT ? Math.min(50, t - lastT) : 16; lastT = t;
+      if (!drag && ++idle > 120) { uYaw += .0012 * dt / 16.7; frame(); budget += dt; }
+      if (budget < 5000) spinRaf = requestAnimationFrame(spin);
+    };
+    function start() { if (!reduce && fp === null && !spinRaf && vis && budget < 5000 && P > .97) { lastT = 0; spinRaf = requestAnimationFrame(spin); } }
+    new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; if (vis) { budget = 0; idle = 0; start(); } }).observe(sec);
+    stage.addEventListener('pointerup', start);
+    document.addEventListener('visibilitychange', start);
     sec.classList.add('loaded');
   }
 })();

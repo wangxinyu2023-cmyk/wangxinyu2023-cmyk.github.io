@@ -13,8 +13,10 @@
   const XP = window.XP = { register: (name, fn) => { ADAPTERS[name] = fn; }, util: {} };
   const blocks = [...document.querySelectorAll('[data-explorer]')];
   if (!blocks.length) return;
+  // a URL with state restores that state; it boots the viewer at once only on fine pointers (phones still wait until it is near)
   const Q = new URLSearchParams(location.search), forced = [...Q.keys()].some(k => /^(view|section|sun|live|paths|t|layout|shade|tab|yaw|pitch|zoom)$/.test(k));
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const coarse = matchMedia('(pointer: coarse)').matches;
   const hasGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
 
   const load = url => new Promise((ok, no) => {     // same dedupe as the scroll animations: one copy of three.js / model per page
@@ -87,24 +89,28 @@
     const year = +p.year, doy = Math.round((Date.UTC(year, +p.month - 1, +p.day) - Date.UTC(year, 0, 1)) / 864e5) + 1;
     return { year, doy, min: +p.hour * 60 + +p.minute, zone: p.timeZoneName };
   }
-  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const MONL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const hhmm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  // dates and times through Intl (UTC-anchored, so the day-of-year / minute values are formatted exactly as given)
+  const fmtDay = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const fmtDayL = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const fmtHM = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' });
+  const dayShort = (y, doy) => fmtDay.format(Date.UTC(y, 0, doy));          // 21 Jul
+  const dayLong = (y, doy) => fmtDayL.format(Date.UTC(y, 0, doy));          // 21 July 2026
+  const hhmm = m => fmtHM.format(Date.UTC(2000, 0, 1, 0, ((Math.round(m) % 1440) + 1440) % 1440));
   const compass = a => ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][Math.round(a / 22.5) % 16];
 
   // ------------------------------------------------------------------ boot each block lazily
   blocks.forEach(el => {
     const stage = el.querySelector('.xp-stage'), wait = el.querySelector('.xp-wait');
-    if (!hasGL) { wait.textContent = 'This browser cannot show the 3D model (WebGL is unavailable).'; el.classList.add('xp-nogl'); return; }
+    if (!hasGL) { wait.textContent = 'This browser can’t show the 3D model. Turn on hardware acceleration, or open the page in Chrome, Edge or Safari.'; el.classList.add('xp-nogl'); return; }
     const up = el.dataset.up || '';
     let started = false;
     const go = () => {
       if (started) return; started = true;
       load(up + 'assets/vendor/three.min.js').then(() => load(up + el.dataset.model)).then(() => load(up + el.dataset.adapter))
         .then(() => { const name = el.dataset.adapter.split('?')[0].split('/').pop().replace(/\.js$/, ''); setup(el, ADAPTERS[name]); })
-        .catch(e => { console.error(e); wait.textContent = 'The 3D model could not be loaded.'; });
+        .catch(e => { console.error(e); wait.textContent = 'The 3D model didn’t load. Reload the page to try again.'; });
     };
-    if (forced) go();
+    if (forced && !coarse) go();
     else new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '700px 0px' }).observe(el);
     // desktop: build the scene during idle time after load (after the scroll animation's own warm-up), not mid-scroll
     if (!forced && matchMedia('(pointer: fine)').matches && innerWidth > 900) {
@@ -149,10 +155,17 @@
     const ctx = { T, M: null, el, plane, util: XP.util, invalidate: () => invalidate(), shadowsDirty: () => { shadowDirty = true; invalidate(); } };
     const spec = adapter(ctx);
     const U = spec.unit === 'm' ? 1 : 1 / .3048;          // scene units per metre
+    // lengths for the screen (real minus sign, primes, no break before the unit) and for screen readers (words, not marks)
+    const ftIn = v => { const a = Math.abs(v); let ft = Math.floor(a + 1e-6), inch = Math.round((a - ft) * 12); if (inch === 12) { ft++; inch = 0; } return [ft, inch]; };
     const fmtLen = v => {
-      if (spec.unit === 'm') return (v >= 0 ? '+' : '') + v.toFixed(1) + ' m';
-      const s = v < 0 ? '-' : '', a = Math.abs(v), ft = Math.floor(a + 1e-6), inch = Math.round((a - ft) * 12);
-      return s + (inch === 12 ? (ft + 1) + "'-0\"" : ft + "'-" + inch + '"');
+      if (spec.unit === 'm') { const r = Math.round(v * 10) / 10; return (r >= 0 ? '+' : '−') + Math.abs(r).toFixed(1) + '\u00a0m'; }
+      const [ft, inch] = ftIn(v);
+      return (v < 0 ? '−' : '') + ft + '′-' + inch + '″';
+    };
+    const sayLen = v => {
+      if (spec.unit === 'm') { const r = Math.round(v * 10) / 10; return (r < 0 ? 'minus ' : '') + Math.abs(r).toFixed(1) + ' metres'; }
+      const [ft, inch] = ftIn(v);
+      return (v < 0 ? 'minus ' : '') + ft + (ft === 1 ? ' foot ' : ' feet ') + inch + (inch === 1 ? ' inch' : ' inches');
     };
     scene.add(spec.root);
     // model coords (Rhino Z-up) -> world (Y-up)
@@ -197,9 +210,13 @@
       const s = new T.MeshStandardMaterial({ color: pick(p.color, m.color.getHex()), map: pick(p.map, m.map), alphaMap: pick(p.alphaMap, m.alphaMap), alphaTest: pick(p.alphaTest, m.alphaTest),
         transparent: pick(p.transparent, m.transparent), opacity: pick(p.opacity, m.opacity), depthWrite: pick(p.depthWrite, m.depthWrite), side: m.side, flatShading: m.flatShading,
         vertexColors: m.vertexColors, polygonOffset: m.polygonOffset, polygonOffsetFactor: m.polygonOffsetFactor, polygonOffsetUnits: m.polygonOffsetUnits,
-        roughness: pick(p.roughness, .86), metalness: pick(p.metalness, 0), clippingPlanes: m.clippingPlanes, clipShadows: m.clipShadows, alphaToCoverage: !!p.alphaToCoverage });
+        roughness: pick(p.roughness, .86), metalness: pick(p.metalness, 0), clippingPlanes: m.clippingPlanes, clipShadows: m.clipShadows, alphaToCoverage: !!p.alphaToCoverage,
+        forceSinglePass: m.forceSinglePass });
       stdOf.set(m, s); return s;
     };
+    // double-sided see-through parts (glass, crowns, room volumes) draw in one pass: three.js would otherwise draw each twice
+    // and flag its material for a program re-check on every frame
+    meshes.forEach(o => { [].concat(o.material || []).forEach(m => { if (m.side === T.DoubleSide) m.forceSinglePass = true; }); });
     const modelMeshes = meshes.filter(o => o.isMesh), modelLines = meshes.filter(o => o.isLine);
     modelMeshes.forEach(o => { o.userData.matB = o.material; o.userData.matR = toStd(o.material); if (o.userData.renderOnly) o.visible = false; });
     const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 900;
@@ -232,7 +249,7 @@
       if (sun.shadow.mapSize.x !== sz) { sun.shadow.mapSize.set(sz, sz); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, high ? 1.6 : 1));
       scene.fog = look.render && high ? fog : null;
-      if (ui.qual) ui.qual.forEach(b => b.setAttribute('aria-checked', (b.dataset.q2 === 'high') === high));
+      if (ui.qual) { ui.qual.forEach(b => b.setAttribute('aria-checked', (b.dataset.q2 === 'high') === high)); rov(ui.qual); }
       if (typeof Wd !== 'undefined' && Wd > 1) renderer.setSize(Wd, Hd, false);
       shadowDirty = true; invalidate();
     }
@@ -278,6 +295,7 @@
       canopy: { show: true, dep: 1, target: 1 },
       tab: el.dataset.defaultTab || tools[0]
     };
+    let urlT = 0;
     const dsun = el.dataset.date;
     const parseSun = s => { const m = /^(\d{4})-(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(s || ''); if (!m) return null; return { y: +m[1], doy: doyOf(+m[1], +m[2] - 1, +m[3]), min: m[4] ? +m[4] * 60 + +m[5] : null }; };
     const doyOf = (y, m, d) => Math.round((Date.UTC(y, m, d) - Date.UTC(y, 0, 1)) / 864e5) + 1;
@@ -351,7 +369,7 @@
         C.target.copy(to); C.dist = d.length(); C.yaw = Math.atan2(d.x, d.z); C.pitch = Math.asin(d.y / C.dist); C.fov = e.fov || 58;
       }
       viewBtns.forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
-      applyCam(); invalidate();
+      applyCam(); invalidate(); if (typeof writeUrl === 'function') writeUrl();
     }
     const worldPerPx = () => cam.isOrthographicCamera ? (ortho.top - ortho.bottom) / Hd : 2 * C.dist * Math.tan(rad(C.fov / 2)) / Hd;
     function rotate(dx, dy) {
@@ -382,8 +400,12 @@
     }
 
     // pointer input (mouse, pen, touch with pinch) + section handle drag
+    // Touch: a vertical one-finger swipe scrolls the page (touch-action pan-y), a sideways swipe orbits, two fingers pinch / pan.
     const ptrs = new Map(); let gesture = null, dragHandle = null;
-    const el2 = renderer.domElement; el2.style.touchAction = 'none';
+    const el2 = renderer.domElement; el2.style.touchAction = coarse ? 'pan-y' : 'none';
+    const tHint = document.createElement('div'); tHint.className = 'xp-touch-hint'; tHint.setAttribute('aria-hidden', 'true');
+    tHint.textContent = 'Swipe sideways to turn it, pinch to zoom'; stage.appendChild(tHint);
+    let hinted = false;
     el2.addEventListener('contextmenu', e => e.preventDefault());
     el2.addEventListener('pointerdown', e => {
       el2.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
@@ -392,8 +414,8 @@
         ray.setFromCamera(ndc, cam);
         if (ray.intersectObject(handle, true).length) { dragHandle = { x: e.clientX, y: e.clientY, pos: S.section.pos }; stage.classList.add('xp-grab'); return; }
       }
-      gesture = { btn: e.button, shift: e.shiftKey || e.ctrlKey || e.metaKey };
-      stage.classList.add('xp-grab');
+      gesture = { btn: e.button, shift: e.shiftKey || e.ctrlKey || e.metaKey, touch: e.pointerType === 'touch', x0: e.clientX, y0: e.clientY, lock: ptrs.size > 1 ? 'multi' : null };
+      if (gesture.lock === 'multi' || !gesture.touch) stage.classList.add('xp-grab');
     });
     el2.addEventListener('pointermove', e => {
       if (!ptrs.has(e.pointerId)) {   // hover: show the handle cursor
@@ -414,15 +436,26 @@
         ptrs.set(e.pointerId, [e.clientX, e.clientY]); return;
       }
       if (ptrs.size === 2) {
+        if (gesture) gesture.lock = 'multi';
         const ids = [...ptrs.keys()], o = ids.find(i => i !== e.pointerId), q = ptrs.get(o);
         const d0 = Math.hypot(prev[0] - q[0], prev[1] - q[1]), d1 = Math.hypot(e.clientX - q[0], e.clientY - q[1]);
         if (d1 > 0 && d0 > 0) zoom(d0 / d1, (e.clientX + q[0]) / 2, (e.clientY + q[1]) / 2);
         pan(dx / 2, dy / 2);
+      } else if (gesture && gesture.touch && gesture.lock !== 'orbit') {
+        // one finger: decide once, from the first few pixels, whether this is a sideways orbit or a page scroll
+        const tx = e.clientX - gesture.x0, ty = e.clientY - gesture.y0;
+        if (!gesture.lock && Math.abs(tx) + Math.abs(ty) > 6) { gesture.lock = Math.abs(tx) >= Math.abs(ty) ? 'orbit' : 'scroll'; if (gesture.lock === 'orbit') { stage.classList.add('xp-grab'); rotate(tx, 0); } }
+        ptrs.set(e.pointerId, [e.clientX, e.clientY]); return;
       } else if (gesture && (gesture.btn === 2 || gesture.btn === 1 || gesture.shift)) pan(dx, dy);
       else rotate(dx, dy);
       ptrs.set(e.pointerId, [e.clientX, e.clientY]);
     });
-    const endPtr = e => { ptrs.delete(e.pointerId); if (!ptrs.size) { gesture = null; dragHandle = null; stage.classList.remove('xp-grab'); } };
+    const endPtr = e => {
+      if (e.type === 'pointercancel' && gesture && gesture.touch && gesture.lock !== 'orbit' && gesture.lock !== 'multi' && !hinted) {
+        hinted = true; tHint.classList.add('on'); setTimeout(() => tHint.classList.remove('on'), 2400);   // the page scrolled: say how to turn it, once
+      }
+      ptrs.delete(e.pointerId); if (!ptrs.size) { gesture = null; dragHandle = null; stage.classList.remove('xp-grab'); }
+    };
     el2.addEventListener('pointerup', endPtr); el2.addEventListener('pointercancel', endPtr);
     el2.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(clamp(e.deltaY, -120, 120) * (e.deltaMode ? .05 : .0016)), e.clientX, e.clientY); }, { passive: false });
     el2.addEventListener('dblclick', () => setView(C.mode === 'eye' ? 'eye' : 'axon', C.mode === 'axon'));
@@ -441,11 +474,22 @@
     ov.innerHTML = '<div class="xp-views" role="group" aria-label="View presets"><button type="button" data-v="plan">Plan</button><button type="button" data-v="axon">Axon</button>' +
       (spec.eye ? '<button type="button" data-v="eye">Eye level</button>' : '') + '<button type="button" data-v="reset" aria-label="Reset view">Reset</button></div>' +
       '<div class="xp-north" aria-hidden="true"><svg viewBox="-20 -20 40 40" width="40" height="40"><circle r="15" fill="none" stroke="currentColor" stroke-opacity=".35"/><path d="M0 -15 L4 2 L0 -1 L-4 2Z" fill="currentColor"/><text y="-17.5" text-anchor="middle" font-size="7">N</text></svg></div>' +
-      '<div class="xp-hud" aria-live="polite"></div>';
+      '<div class="xp-hud"></div>';     // not a live region: it changes every frame while a day plays (see announce())
     stage.appendChild(ov);
     const viewBtns = [...ov.querySelectorAll('.xp-views button')].filter(b => b.dataset.v !== 'reset');
     ov.querySelectorAll('.xp-views button').forEach(b => b.addEventListener('click', () => setView(b.dataset.v === 'reset' ? 'axon' : b.dataset.v)));
     const northEl = ov.querySelector('.xp-north'), northSvg = northEl.querySelector('svg'), hud = ov.querySelector('.xp-hud');
+    // screen readers: one short summary after a discrete change (preset, toggle, slider release), at most once a second
+    const live = el.querySelector('[data-xp-live]');
+    let annT = 0, annLast = 0;
+    const announce = (lead, withHud = true) => {
+      if (!live) return;
+      clearTimeout(annT);
+      annT = setTimeout(() => {
+        const go = () => { annLast = performance.now(); const h = withHud ? hud.innerText.replace(/\s*\n+\s*/g, ', ').trim() : ''; live.textContent = [lead, h].filter(Boolean).join('. '); };
+        const wait = 1000 - (performance.now() - annLast); wait > 0 ? (annT = setTimeout(go, wait)) : go();
+      }, 650);
+    };
     const northW = (() => { const t = rad(north); return new V3(Math.cos(t), 0, -Math.sin(t)); })();
 
     // -------------------------------------------------- section
@@ -477,11 +521,11 @@
         if (s.axis === 'z') { handle.position.set(fbox.max.x, v, fbox.max.z); handle.quaternion.identity(); }
         else { handle.position.copy(cap.position); handle.position.y = fbox.max.y + hs * 2; handle.quaternion.setFromUnitVectors(new V3(0, 1, 0), n); }
       }
-      if (ui.secPos) { ui.secPos.value = Math.round(s.pos * 1000); ui.secOut.textContent = fmtLen(s.axis === 'z' ? v - groundY : v); ui.secPos.setAttribute('aria-valuetext', ui.secOut.textContent); }
-      if (ui.secAxis) ui.secAxis.forEach(b => b.setAttribute('aria-checked', b.dataset.v === s.axis));
+      if (ui.secPos) { const lv = s.axis === 'z' ? v - groundY : v; ui.secPos.value = Math.round(s.pos * 1000); ui.secOut.textContent = fmtLen(lv); ui.secPos.setAttribute('aria-valuetext', sayLen(lv)); }
+      if (ui.secAxis) { ui.secAxis.forEach(b => b.setAttribute('aria-checked', b.dataset.axis === s.axis)); rov(ui.secAxis); }
       if (ui.secSw) ui.secSw.setAttribute('aria-checked', s.on);
       panel.classList.toggle('xp-sec-on', s.on);
-      markTabs(); shadowDirty = true; invalidate();
+      markTabs(); shadowDirty = true; invalidate(); writeUrl();
     }
     const faceCam = a => a !== 'z' && axisVec(a).dot(camDir()) <= 0;   // keep the half whose cut face looks at the camera
     const planAt = i => { const L = levels[clamp(i, 0, levels.length - 1)], [lo, hi] = axisRange('z'); setSection({ on: true, axis: 'z', flip: false, pos: clamp((L.z + cutH - lo) / (hi - lo), 0, 1) }); };
@@ -549,7 +593,7 @@
         sol = null; sun.castShadow = false; sun.color.set(0xffffff); sun.intensity = 1.5; hemi.intensity = 1.55; hemi.color.set(0xffffff); hemi.groundColor.set(0xd9d2c5);
         sun.position.copy(fctr).addScaledVector(KEYDIR, fR * 3); sun.target.position.copy(fctr);
         gizmo.visible = false; stage.style.removeProperty('--xp-sky'); stage.classList.remove('xp-night'); shadeOverlay && (shadeOverlay.visible = false);
-        hudSun(); invalidate(); return;
+        hudSun(); invalidate(); writeUrl(); return;
       }
       const ms = s.live ? s.liveMs : (s.frozenMs ?? utcOf(s.year, s.doy, s.min)); sol = solar(ms, lat, lon);
       const alt = sol.alt, dir = sunVec(Math.max(alt, .5), sol.az);
@@ -591,12 +635,12 @@
       }
       const sv = sunVec(alt, sol.az).multiplyScalar(gR); sunBall.position.copy(sv); sunBall.visible = alt > -.5;
       sunRay.geometry.attributes.position.setXYZ(1, sv.x, sv.y, sv.z); sunRay.geometry.attributes.position.needsUpdate = true; sunRay.visible = alt > -.5;
-      shadowDirty = true; shadeDirty = true; hudSun(); invalidate();
+      shadowDirty = true; shadeDirty = true; hudSun(); invalidate(); writeUrl();
     }
     function hudSun() {
-      const s = S.sun, { m, d } = dateOf(s.year, s.doy), zone = s.live || s.frozenMs !== null ? s.zone : tzOf(s.year, s.doy, s.min);
+      const s = S.sun, day = dayShort(s.year, s.doy), zone = s.live || s.frozenMs !== null ? s.zone : tzOf(s.year, s.doy, s.min);
       if (ui.sunDate) {
-        ui.sunDate.max = daysInYear(s.year); ui.sunDate.value = s.doy; ui.dateOut.textContent = d + ' ' + MON[m] + ' ' + s.year; ui.sunDate.setAttribute('aria-valuetext', d + ' ' + MONL[m] + ' ' + s.year);
+        ui.sunDate.max = daysInYear(s.year); ui.sunDate.value = s.doy; ui.dateOut.textContent = day + ' ' + s.year; ui.sunDate.setAttribute('aria-valuetext', dayLong(s.year, s.doy));
         ui.sunTime.value = s.min; ui.timeOut.textContent = hhmm(s.min) + ' ' + zone; ui.sunTime.setAttribute('aria-valuetext', ui.timeOut.textContent);
         ui.sunLive.setAttribute('aria-pressed', s.live);
         ui.sunStatus.textContent = s.live ? 'Live New York time · updates every minute' : s.play ? 'Playing a day · New York time' : 'Drag the time slider to move the shadows.';
@@ -605,10 +649,10 @@
           ui.rAlt.textContent = sol.alt.toFixed(1) + '°'; ui.rAz.textContent = Math.round(sol.az) + '° ' + compass(sol.az);
           ui.rRise.textContent = sol.rise === null ? '–' : hhmm(localMin(s.year, s.doy, sol.rise)); ui.rSet.textContent = sol.set === null ? '–' : hhmm(localMin(s.year, s.doy, sol.set));
         }
-        if (ui.sunPlay) ui.sunPlay.setAttribute('aria-pressed', s.play), ui.sunPlay.textContent = s.play ? 'Pause day' : 'Play day';
+        if (ui.sunPlay) ui.sunPlay.setAttribute('aria-pressed', s.play);   // constant label "Play day"; the pressed state says it is playing
       }
       let h = '';
-      if (s.on && sol) h += '<span><b>' + (s.live ? 'Live &middot; ' : '') + d + ' ' + MON[m] + ' &middot; ' + hhmm(s.min) + ' ' + zone + '</b>' +
+      if (s.on && sol) h += '<span><b>' + (s.live ? 'Live &middot; ' : '') + day + ' &middot; ' + hhmm(s.min) + ' ' + zone + '</b>' +
         (sol.alt > 0 ? 'Sun ' + sol.alt.toFixed(0) + '° high, ' + compass(sol.az) : sol.alt > -6 ? 'Twilight' : 'Night') + '</span>';
       if (s.on && spec.shade) h += '<span class="xp-shade-read"><b>' + (shadeVal === null ? '&hellip;' : Math.round(shadeVal * 100) + '%') + '</b>' + spec.shade.label + ' in direct sun' + (S.canopy.show ? '' : ' with no canopies') + (spec.shade.compare && shadeVal2 !== null ? ' &middot; ' + Math.round(shadeVal2 * 100) + '% ' + (S.canopy.show ? spec.shade.compare.label : (spec.shade.compare.labelOn || 'with them')) : '') + '</span>';
       hud.innerHTML = h;
@@ -731,7 +775,7 @@
       for (let a = 0; a < n; a++) { col.set(COLS[P.agents[a].kind]); for (let k = 0; k < K; k++) for (let s = 0; s < 2; s++) { const v = (a * K + k) * 2 + s; rgba[v * 4] = col.r; rgba[v * 4 + 1] = col.g; rgba[v * 4 + 2] = col.b; rgba[v * 4 + 3] = 0; }
         for (let k = 0; k < K - 1; k++) { const v = (a * K + k) * 2; idx.push(v, v + 1, v + 2, v + 1, v + 3, v + 2); } }
       const tg = new T.BufferGeometry(); tg.setAttribute('position', new T.BufferAttribute(pos, 3).setUsage(T.DynamicDrawUsage)); tg.setAttribute('color', new T.BufferAttribute(rgba, 4).setUsage(T.DynamicDrawUsage)); tg.setIndex(idx);
-      P.trail = new T.Mesh(tg, new T.ShaderMaterial({ transparent: true, depthWrite: false, side: T.DoubleSide,
+      P.trail = new T.Mesh(tg, new T.ShaderMaterial({ transparent: true, depthWrite: false, side: T.DoubleSide, forceSinglePass: true,
         vertexShader: '#include <clipping_planes_pars_vertex>\nattribute vec4 color;varying vec4 vc;void main(){vc=color;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;\n#include <clipping_planes_vertex>\n}',
         fragmentShader: '#include <clipping_planes_pars_fragment>\nvarying vec4 vc;void main(){\n#include <clipping_planes_fragment>\ngl_FragColor=vc;}' }));
       P.trail.material.clipping = true; P.trail.material.clippingPlanes = [plane];
@@ -793,7 +837,7 @@
     const cmpSpec = spec.shade && spec.shade.compare, cnp = spec.canopy;
     if (cnp && (cmpSpec || spec.deploy)) html += '<div class="xp-row xp-mode xp-canopy"><span class="label">' + cnp.label + '</span>' +
       (cmpSpec ? '<div class="xp-seg" role="radiogroup" aria-label="' + cnp.label + '"><button type="button" role="radio" data-can="1">' + cnp.on + '</button><button type="button" role="radio" data-can="0">' + cnp.off + '</button></div>' : '') +
-      (spec.deploy ? '<div class="xp-chips" style="margin-top:8px"><button type="button" class="xp-chip xp-play" data-act="fold" aria-pressed="false">' + spec.deploy.fold + '</button></div>' : '') + '</div>';
+      (spec.deploy ? '<div class="xp-chips" style="margin-top:8px"><button type="button" class="xp-chip xp-play" data-act="fold" aria-pressed="false"><span class="xp-fl">' + spec.deploy.fold + '</span><span class="xp-pct" aria-hidden="true"></span></button></div>' : '') + '</div>';
     const NAMES = { section: 'Section', sun: 'Sun', paths: 'Movement' };
     html += '<div class="xp-tabs" role="tablist" aria-label="Tools">' + tools.map(t => '<button type="button" role="tab" id="' + uid + '-t-' + t + '" aria-controls="' + uid + '-p-' + t + '" data-tab="' + t + '">' + NAMES[t] + '<i class="xp-dot"></i></button>').join('') +
       '<button type="button" class="xp-fold" aria-expanded="true" aria-label="Show or hide controls">&#9662;</button></div>';
@@ -813,14 +857,51 @@
       '<div class="xp-row xp-checks"><label><input type="checkbox" data-ck="path"> Sun path</label>' + (spec.shade ? '<label><input type="checkbox" data-ck="shade"> Shade map</label>' : '') + '</div>' +
       '<p class="xp-note">' + Math.abs(lat).toFixed(3) + '°' + (lat >= 0 ? 'N' : 'S') + ', ' + Math.abs(lon).toFixed(3) + '°' + (lon < 0 ? 'W' : 'E') + ', US Eastern time. ' + (spec.sunNote || '') + '</p></div>';
     if (tools.includes('paths') && spec.paths) html += '<div class="xp-pane" role="tabpanel" id="' + uid + '-p-paths" aria-labelledby="' + uid + '-t-paths">' + sw('People moving', uid + 'pth') +
-      '<div class="xp-row xp-playrow"><button type="button" class="xp-chip xp-play" data-act="play" aria-pressed="true">Pause</button><span class="label">Clock <b class="xp-clock">0:00</b></span></div>' +
+      '<div class="xp-row xp-playrow"><button type="button" class="xp-chip xp-play" data-act="play" aria-pressed="true">Play</button><span class="label">Clock <b class="xp-clock">0:00</b></span></div>' +
       '<div class="xp-row"><label class="label" for="' + uid + '-ps">Speed <output></output></label><input id="' + uid + '-ps" class="xp-range" type="range" min="0" max="100" step="1"></div>' +
       '<div class="xp-row xp-checks"><label><input type="checkbox" data-ck="trails"> Trails</label></div><ul class="xp-legend"></ul><p class="xp-note xp-pnote"></p></div>';
     panel.innerHTML = html;
     const $ = s => panel.querySelector(s), $$ = s => [...panel.querySelectorAll(s)];
+    // a switch's visible text label toggles it as well (it already names it through aria-labelledby)
+    $$('.xp-swl').forEach(l => l.addEventListener('click', () => { const b = l.nextElementSibling; if (b) b.click(); }));
+    // radio groups: one tab stop (the checked radio); arrow keys move and select, as the ARIA radio pattern expects
+    function rov(list) {
+      if (!list || !list.length) return;
+      let any = false; list.forEach(b => { const on = b.getAttribute('aria-checked') === 'true'; b.tabIndex = on ? 0 : -1; any = any || on; });
+      if (!any) list[0].tabIndex = 0;
+    }
+    $$('[role=radiogroup]').forEach(g => {
+      const rs = [...g.querySelectorAll('[role=radio]')];
+      rs.forEach((b, i) => b.addEventListener('keydown', e => {
+        const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0; if (!d) return;
+        const nb = rs[(i + d + rs.length) % rs.length]; nb.focus(); nb.click(); e.preventDefault();
+      }));
+      rs.forEach(b => b.addEventListener('click', () => announce(b.textContent)));
+      rov(rs);
+    });
+    // the view a reader built (tool, view, cut, sun, layout) is kept in the URL, so it can be shared
+    const pad2 = n => String(n).padStart(2, '0');
+    const DEF = (() => { const d = parseSun(dsun) || { y: 2026, doy: 202, min: 840 }; return { tab: el.dataset.defaultTab || tools[0], layout: spec.layouts ? spec.layouts.value : null, y: d.y, doy: d.doy, min: d.min === null ? 840 : d.min, sec: null }; })();   // sec: set after the initial cut is applied (see the end of setup)
+    function writeUrl() {
+      clearTimeout(urlT);
+      urlT = setTimeout(() => {
+        const q = new URLSearchParams(location.search);
+        ['tab', 'view', 'section', 'sun', 'live', 'layout'].forEach(k => q.delete(k));
+        if (S.tab !== DEF.tab) q.set('tab', S.tab);
+        if (C.mode !== 'axon') q.set('view', C.mode);
+        const sec = JSON.stringify([S.section.on, S.section.axis, +(+S.section.pos).toFixed(3)]);
+        if (DEF.sec !== null && sec !== DEF.sec) q.set('section', S.section.on ? S.section.axis + ':' + (+S.section.pos).toFixed(3) : 'off');
+        if (S.sun.live) q.set('live', '1');
+        else if (!S.sun.on) q.set('sun', 'off');
+        else if (S.sun.year !== DEF.y || S.sun.doy !== DEF.doy || Math.round(S.sun.min) !== DEF.min) { const { m, d } = dateOf(S.sun.year, S.sun.doy); q.set('sun', S.sun.year + '-' + pad2(m + 1) + '-' + pad2(d) + 'T' + hhmm(S.sun.min)); }
+        if (spec.layouts && S.layout !== DEF.layout) q.set('layout', S.layout);
+        const qs = q.toString(), u = location.pathname + (qs ? '?' + qs : '') + location.hash;
+        if (u !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', u);
+      }, 400);
+    }
     // tabs (roving, arrow keys)
     const tabs = $$('[role=tab]');
-    function showTab(t) { S.tab = tools.includes(t) ? t : tools[0]; tabs.forEach(b => { const on = b.dataset.tab === S.tab; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }); $$('.xp-pane').forEach(p => { p.hidden = p.id !== uid + '-p-' + S.tab; }); }
+    function showTab(t) { S.tab = tools.includes(t) ? t : tools[0]; tabs.forEach(b => { const on = b.dataset.tab === S.tab; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; }); $$('.xp-pane').forEach(p => { p.hidden = p.id !== uid + '-p-' + S.tab; }); writeUrl(); }
     tabs.forEach((b, i) => { b.addEventListener('click', () => { showTab(b.dataset.tab); panel.classList.remove('xp-folded'); fold.setAttribute('aria-expanded', true); });
       b.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; const nb = tabs[(i + d + tabs.length) % tabs.length]; nb.focus(); showTab(nb.dataset.tab); e.preventDefault(); }); });
     const fold = $('.xp-fold'); fold.addEventListener('click', () => { const f = panel.classList.toggle('xp-folded'); fold.setAttribute('aria-expanded', !f); });
@@ -828,18 +909,21 @@
     // layout
     const layBtns = $$('[data-layout]');
     function setLayout(v) {
-      S.layout = v; spec.layouts.set(v); layBtns.forEach(b => b.setAttribute('aria-checked', b.dataset.layout === v));
+      S.layout = v; spec.layouts.set(v); layBtns.forEach(b => b.setAttribute('aria-checked', b.dataset.layout === v)); rov(layBtns); writeUrl();
       P.scen = null; shadowDirty = shadeDirty = true; if (aoMesh) aoMesh.userData.draw(); updatePaths(); invalidate();
     }
     layBtns.forEach(b => b.addEventListener('click', () => setLayout(b.dataset.layout)));
     // canopy: with / without (the same scene, canopies hidden) and an animated fold / unfold of every cart
     const canBtns = $$('[data-can]'), foldBtn = $('[data-act=fold]');
     function syncCanopy() {
-      canBtns.forEach(b => b.setAttribute('aria-checked', (b.dataset.can === '1') === S.canopy.show));
+      canBtns.forEach(b => b.setAttribute('aria-checked', (b.dataset.can === '1') === S.canopy.show)); rov(canBtns);
       if (foldBtn) {
-        const c = S.canopy, moving = c.dep !== c.target;
-        foldBtn.textContent = moving ? (c.target > c.dep ? 'Unfolding ' : 'Folding ') + Math.round(c.dep * 100) + '% · stop' : (c.dep < .5 ? spec.deploy.unfold : spec.deploy.fold);
-        foldBtn.setAttribute('aria-pressed', moving);
+        // the accessible name only changes with the action (fold / unfold); the running percentage is visual only
+        const c = S.canopy, moving = c.dep !== c.target, lab = moving ? (c.target > c.dep ? spec.deploy.unfold : spec.deploy.fold) : (c.dep < .5 ? spec.deploy.unfold : spec.deploy.fold);
+        const fl = foldBtn.querySelector('.xp-fl'), fp = foldBtn.querySelector('.xp-pct'), pc = moving ? ' ' + Math.round(c.dep * 100) + '%' : '';
+        if (fl.textContent !== lab) fl.textContent = lab;
+        if (fp.textContent !== pc) fp.textContent = pc;
+        if (foldBtn.getAttribute('aria-pressed') !== String(moving)) foldBtn.setAttribute('aria-pressed', moving);
       }
     }
     function setCanopy(show) {
@@ -858,11 +942,13 @@
     // section controls
     if (tools.includes('section')) {
       ui.secSw = $('[data-sw="' + uid + 'sec"]'); ui.secAxis = $$('[data-axis]'); ui.secPos = $('#' + uid + '-sp'); ui.secOut = ui.secPos.previousElementSibling.querySelector('output');
-      ui.secSw.addEventListener('click', () => setSection({ on: !S.section.on, flip: faceCam(S.section.axis) }));
+      const secSay = () => announce(S.section.on ? 'Section cut at ' + (ui.secPos.getAttribute('aria-valuetext') || ui.secOut.textContent) : 'Section cut off', false);
+      ui.secSw.addEventListener('click', () => { setSection({ on: !S.section.on, flip: faceCam(S.section.axis) }); secSay(); });
+      ui.secPos.addEventListener('change', secSay);
       ui.secAxis.forEach(b => b.addEventListener('click', () => { const z = b.dataset.axis === 'z'; setSection({ on: true, axis: b.dataset.axis, flip: faceCam(b.dataset.axis), pos: z ? (levels[0].z + cutH - F[2]) / (F[5] - F[2]) : .5 }); }));
       ui.secPos.addEventListener('input', () => setSection({ on: true, pos: ui.secPos.value / 1000 }));
       $$('[data-level]').forEach(b => b.addEventListener('click', () => { planAt(+b.dataset.level); if (C.mode !== 'plan') setView('plan'); }));
-      $('[data-act=flip]').addEventListener('click', () => setSection({ flip: !S.section.flip }));
+      $('[data-act=flip]').addEventListener('click', () => { setSection({ flip: !S.section.flip }); secSay(); });
     }
     // sun controls
     if (tools.includes('sun')) {
@@ -871,16 +957,18 @@
       ui.rAlt = $('[data-r=alt]'); ui.rAz = $('[data-r=az]'); ui.rRise = $('[data-r=rise]'); ui.rSet = $('[data-r=set]'); ui.sunPlay = $('[data-act=day]');
       ui.sunLive = $('[data-q=now]'); ui.sunStatus = $('[data-sun-status]');
       const manualSun = () => { S.sun.live = false; S.sun.play = false; S.sun.frozenMs = null; };
-      ui.sunSw.addEventListener('click', () => { S.sun.on = !S.sun.on; if (!S.sun.on) manualSun(); updateSun(); });
+      ui.sunSw.addEventListener('click', () => { S.sun.on = !S.sun.on; if (!S.sun.on) manualSun(); updateSun(); announce(S.sun.on ? 'Sun on' : 'Sun off'); });
+      ui.sunDate.addEventListener('change', () => announce());
+      ui.sunTime.addEventListener('change', () => announce());
       ui.sunDate.addEventListener('input', () => { manualSun(); S.sun.on = true; S.sun.doy = +ui.sunDate.value; updateSun(); });
       ui.sunTime.addEventListener('input', () => { manualSun(); S.sun.on = true; S.sun.min = +ui.sunTime.value; updateSun(); });
       $$('[data-q]').forEach(b => b.addEventListener('click', () => {
         S.sun.on = true; S.sun.play = false;
         if (b.dataset.q === 'now') { S.sun.live = !S.sun.live; S.sun.frozenMs = S.sun.live ? null : S.sun.liveMs; if (S.sun.live) syncLiveSun(true); }
         else { manualSun(); const m = /(\d\d)-(\d\d)(?:T(\d\d):(\d\d))?/.exec(b.dataset.q); S.sun.doy = doyOf(S.sun.year, +m[1] - 1, +m[2]); if (m[3]) S.sun.min = +m[3] * 60 + +m[4]; }
-        updateSun();
+        updateSun(); announce(b.textContent);
       }));
-      ui.sunPlay.addEventListener('click', () => { S.sun.live = false; S.sun.frozenMs = null; S.sun.play = !S.sun.play; S.sun.on = true; if (S.sun.play && (S.sun.min > 20.5 * 60 || S.sun.min < 300)) S.sun.min = 330; updateSun(); invalidate(); });
+      ui.sunPlay.addEventListener('click', () => { S.sun.live = false; S.sun.frozenMs = null; S.sun.play = !S.sun.play; S.sun.on = true; if (S.sun.play && (S.sun.min > 20.5 * 60 || S.sun.min < 300)) S.sun.min = 330; updateSun(); invalidate(); announce(S.sun.play ? 'Playing a day' : 'Day paused', !S.sun.play); });
       ui.qual = $$('[data-q2]'); ui.qual.forEach(b => b.addEventListener('click', () => { setQuality(b.dataset.q2 === 'high'); updateSun(); }));
       const ckP = $('[data-ck=path]'); ckP.checked = S.sun.path; ckP.addEventListener('change', () => { S.sun.path = ckP.checked; updateSun(); });
       const ckS = $('[data-ck=shade]');
@@ -891,12 +979,18 @@
       ui.pathSw = $('[data-sw="' + uid + 'pth"]'); ui.pathPlay = $('[data-act=play]'); ui.pathSpeed = $('#' + uid + '-ps'); ui.speedOut = ui.pathSpeed.previousElementSibling.querySelector('output');
       ui.pathClock = $('.xp-clock'); ui.legend = $('.xp-legend'); ui.pathNote = $('.xp-pnote');
       const spd = v => Math.pow(2, v / 100 * 5 - 1.5);   // 0.35x .. 11x, log scale
-      const syncP = () => { ui.pathSw.setAttribute('aria-checked', S.paths.on); ui.pathPlay.textContent = S.paths.play ? 'Pause' : 'Play'; ui.pathPlay.setAttribute('aria-pressed', S.paths.play);
+      // the walking people start on their own, so a pause control stays on the stage whatever tab is open (WCAG 2.2.2)
+      const ovPlay = document.createElement('button'); ovPlay.type = 'button'; ovPlay.className = 'xp-ovplay';
+      ovPlay.innerHTML = '<i aria-hidden="true"></i>People moving'; ov.appendChild(ovPlay); stage.classList.add('xp-has-ovplay');
+      const syncP = () => { ui.pathSw.setAttribute('aria-checked', S.paths.on); ui.pathPlay.setAttribute('aria-pressed', S.paths.play);
+        ovPlay.setAttribute('aria-pressed', S.paths.play); ovPlay.hidden = !S.paths.on;
         ui.pathSpeed.value = Math.round((Math.log2(S.paths.speed) + 1.5) / 5 * 100); ui.speedOut.textContent = (S.paths.speed < 1 ? S.paths.speed.toFixed(2) : S.paths.speed.toFixed(1)).replace(/\.0+$/, '') + '×';
         panel.classList.toggle('xp-paths-on', S.paths.on); markTabs(); };
       ui.syncP = syncP;
-      ui.pathSw.addEventListener('click', () => { S.paths.on = !S.paths.on; if (S.paths.on && !reduce) S.paths.play = true; syncP(); updatePaths(); invalidate(); });
-      ui.pathPlay.addEventListener('click', () => { S.paths.play = !S.paths.play; if (S.paths.play) S.paths.on = true; syncP(); updatePaths(); invalidate(); });
+      const togglePlay = () => { S.paths.play = !S.paths.play; if (S.paths.play) S.paths.on = true; syncP(); updatePaths(); invalidate(); announce(S.paths.play ? 'People moving' : 'People paused', false); };
+      ui.pathSw.addEventListener('click', () => { S.paths.on = !S.paths.on; if (S.paths.on && !reduce) S.paths.play = true; syncP(); updatePaths(); invalidate(); announce(S.paths.on ? 'People moving on' : 'People moving off', false); });
+      ui.pathPlay.addEventListener('click', togglePlay);
+      ovPlay.addEventListener('click', togglePlay);
       ui.pathSpeed.addEventListener('input', () => { S.paths.speed = spd(+ui.pathSpeed.value); syncP(); });
       const ckT = $('[data-ck=trails]'); ckT.checked = S.paths.trails; ckT.addEventListener('change', () => { S.paths.trails = ckT.checked; updatePaths(); invalidate(); });
       syncP();
@@ -915,16 +1009,21 @@
     function onScreen() { const r = stage.getBoundingClientRect(); return r.bottom > -100 && r.top < innerHeight + 100 && r.width > 0; }
     function schedule() { if (!visible && onScreen()) visible = true; if (!raf && visible) raf = requestAnimationFrame(loop); }
     function size() { Wd = Math.max(1, stage.clientWidth); Hd = Math.max(1, stage.clientHeight); renderer.setSize(Wd, Hd, false); applyCam(); invalidate(); }
+    // while the page itself is scrolling, the walking people keep their clock but skip drawing, so the scroll stays smooth
+    let lastScroll = -1e9, walkDirty = false;
+    addEventListener('scroll', () => { lastScroll = performance.now(); }, { passive: true });
     function loop(now) {
       raf = 0; const dt = Math.min(.1, (now - last) / 1000); last = now;
       let anim = false;
-      if (S.paths.on && S.paths.play && spec.paths) { S.paths.t += dt * S.paths.speed; anim = true; dirty = true; }
+      if (S.paths.on && S.paths.play && spec.paths) { S.paths.t += dt * S.paths.speed; anim = true; walkDirty = true; }
+      if (walkDirty && now - lastScroll > 180) { dirty = true; walkDirty = false; }
       if (S.sun.play && S.sun.on) { S.sun.min += dt * 50; if (S.sun.min > 21 * 60) S.sun.min = 330; updateSun(); anim = true; }
       if (spec.deploy && S.canopy.dep !== S.canopy.target) {
         const c = S.canopy, st = dt / (spec.deploy.seconds || 6);
         c.dep = c.target > c.dep ? Math.min(c.target, c.dep + st) : Math.max(c.target, c.dep - st);
         spec.deploy.set(c.dep); shadowDirty = shadeDirty = true; dirty = true; anim = true; syncCanopy();
         if (aoMesh && (Math.abs(c.dep - (c.aoAt ?? 1)) > .08 || c.dep === c.target)) { c.aoAt = c.dep; aoMesh.userData.draw(); }
+        if (c.dep === c.target) announce(c.dep < .5 ? 'Canopies folded' : 'Canopies unfolded');
       }
       if (dirty) {
         try { render(); }
@@ -987,6 +1086,7 @@
     if (Q.get('zoom')) C.dist /= +Q.get('zoom');
     if (Q.get('target')) { const tg = Q.get('target').split(',').map(Number); C.target.copy(W(tg[0], tg[1], tg[2] || 0)); }
     if (S.section.on && Q.get('flip') === null) setSection({ flip: faceCam(S.section.axis) });
+    DEF.sec = Q.get('section') ? '' : JSON.stringify([S.section.on, S.section.axis, +(+S.section.pos).toFixed(3)]);   // a cut given in the URL stays in it
     applyCam();
     el.classList.add('xp-ready');
     stage.querySelector('.xp-wait').remove();

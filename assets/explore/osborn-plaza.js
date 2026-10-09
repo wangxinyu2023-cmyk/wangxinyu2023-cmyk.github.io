@@ -267,7 +267,7 @@ XP.register('osborn-plaza', ({ T, util }) => {
   const front = a => [Math.sin(a), -Math.cos(a)];
   const vendors = LAY.market.map(([x, y, a]) => { const f = front(a); return { pts: [[x - f[0] * 1.9, y - f[1] * 1.9]], kind: 3, face: Math.atan2(f[1], f[0]) }; });
   const market = { agents: [...vendors], routes: [SPINE, [[1, 38.4], [-21, 38.4]], [[0.5, -47], [8, -44.5], [14, -38], [17, -32], [20.4, -30.8]]],
-    legend: [[0, 'Shoppers'], [3, 'Stallholders']], note: 'Wednesday market: shoppers come in through the south gate or from Belmont Avenue, walk the 3.5 m aisle and stop at two to four stalls.' };
+    legend: [[0, 'Shoppers'], [3, 'Stallholders']], note: 'Wednesday market: shoppers come in through the south gate or from Belmont Avenue, walk the 3.5\u00a0m aisle and stop at two to four stalls.' };
   for (let i = 0; i < 46; i++) market.agents.push(shopper(i));
   // everyday: people cutting through between the gate and Belmont, others coming to sit for a while under the benches' shade
   const daily = { agents: [], routes: [SPINE, [[25, 52], [25, -25], [20, -44], [0.5, -47]]], legend: [[1, 'Passing through'], [2, 'Coming to sit'], [0, 'Strolling']],
@@ -324,6 +324,6 @@ XP.register('osborn-plaza', ({ T, util }) => {
     shade: { rect: [-29.2, -49.1, 30.4, 49.8], z: 0.12, cell: 2, label: 'Plaza floor', compare: { label: 'without the canopies', labelOn: 'with the canopies', hide: hideCanopies } },
     canopy: { label: 'Canopies', on: 'With canopies', off: 'No canopies' },
     deploy: { seconds: 7, fold: 'Fold canopies', unfold: 'Unfold canopies', set: d => { DEP = d; setLayout(layoutNow); } },
-    sunNote: 'Plan north from the site survey (11° east of the model’s +Y). Neighbouring buildings within 600 ft come from the LiDAR context model; reed panels let about a third of the sun through.'
+    sunNote: 'Plan north from the site survey (11° east of the model’s +Y). Neighbouring buildings within 600\u00a0ft come from the LiDAR context model; reed panels let about a third of the sun through.'
   };
 });

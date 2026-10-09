@@ -16,7 +16,9 @@
     if (o) { if (o.dataset.ok) ok(); else { o.addEventListener('load', ok); o.addEventListener('error', no); } return; }
     const s = document.createElement('script'); s.src = u; s.onload = () => { s.dataset.ok = 1; ok(); }; s.onerror = no; document.head.appendChild(s); });
   let started = false;
-  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(() => sec.classList.add('failed')); };
+  // on failure the section collapses to its caption and says what to do, instead of leaving screens of empty scroll
+  const fail = e => { if (e) console.error(e); sec.classList.add('failed'); const w = sec.querySelector('.m3-wait'); if (w) w.textContent = 'The 3D model didn’t load. Reload the page to try again.'; };
+  const go = () => { if (started) return; started = true; load('assets/vendor/three.min.js').then(() => load(sec.dataset.model)).then(init).catch(fail); };
   new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { o.disconnect(); go(); } }, { rootMargin: '600px 0px' }).observe(sec);
   // desktop: warm the scene up while the reader is still on the hero, so the main-thread build never lands mid-scroll
   if (matchMedia('(pointer: fine)').matches && innerWidth > 900) addEventListener('load', () => setTimeout(() => (window.requestIdleCallback || (f => setTimeout(f, 1)))(go, { timeout: 4000 }), 1200), { once: true });
@@ -58,16 +60,25 @@
     stage.addEventListener('pointermove', e => { if (!drag) return; yaw = drag[2] - (e.clientX - drag[0]) * .008; pitch = Math.min(1.2, Math.max(.15, drag[3] + (e.clientY - drag[1]) * .005)); idle = 0; frame(); });
     const end = () => { drag = null; stage.classList.remove('grab'); };
     stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+    // keyboard alternative to dragging: the stage takes focus once the model is here; arrow keys turn it
+    stage.tabIndex = 0; stage.setAttribute('role', 'application'); stage.setAttribute('aria-roledescription', '3D model');
+    stage.setAttribute('aria-label', ((sec.querySelector('.ex-hint') || {}).textContent || '3D model') + '. Arrow keys turn it.');
+    stage.addEventListener('keydown', e => {
+      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key]; if (!d) return;
+      e.preventDefault(); yaw -= d[0] * .15; pitch = Math.min(1.2, Math.max(.15, pitch + d[1] * .08)); idle = 0; frame();
+    });
 
     const GAP = .13, lv = M.levels;
     const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     const fp = new URLSearchParams(location.search).get('explode');
-    let W = 0, H = 0;
-    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); };
+    let W = 0, H = 0, top = 0, span = 1;
+    // section geometry is measured on resize / layout change, never inside the scroll frame
+    const measure = () => { top = sec.getBoundingClientRect().top + scrollY; span = Math.max(1, sec.offsetHeight - innerHeight); };
+    const size = () => { W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); measure(); };
     const v = new T.Vector3();
+    labels.forEach(li => { li.style.top = '0'; });
     function frame() {
-      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
-      let p = Math.min(1, Math.max(0, -r.top / Math.max(1, span)));
+      let p = Math.min(1, Math.max(0, (scrollY - top) / span));
       if (reduce) p = 1;
       if (fp !== null) p = +fp;
       const e = ease(Math.min(1, Math.max(0, (p - .06) / .78)));
@@ -86,20 +97,34 @@
       labels.forEach((li, i) => {
         const k = n - 1 - i; // list is top-down
         v.set(0, lv[k] + .03 + floors[k].position.y, 0).project(cam);
-        li.style.top = ((1 - v.y) / 2 * 100).toFixed(2) + '%';
+        li.style.transform = 'translate3d(0,' + ((1 - v.y) / 2 * H).toFixed(1) + 'px,0) translateY(-50%)';
         li.classList.toggle('on', e > .55 + i * .05);
       });
-      bar.style.width = (p * 100).toFixed(1) + '%';
+      bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
     }
+    // the glazing (transparent, double-sided) draws in one pass: no second pass and no per-frame program re-check
+    scene.traverse(o => { [].concat(o.material || []).forEach(m => { if (m.side === T.DoubleSide) m.forceSinglePass = true; }); });
     size(); frame();
-    let sRaf = 0; addEventListener('scroll', () => { if (sRaf) return; const rr = sec.getBoundingClientRect(); if (rr.bottom < -80 || rr.top > innerHeight + 80) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
+    // compile every shader now (idle time, before the reader scrolls) instead of on the first frame each part appears
+    try { renderer.compile(scene, cam); } catch (e) {}
+    const near = () => scrollY + innerHeight > top - 80 && scrollY < top + span + innerHeight + 80;
+    let sRaf = 0; addEventListener('scroll', () => { if (sRaf || !near()) return; sRaf = requestAnimationFrame(t => { sRaf = 0; frame(t); }); }, { passive: true });
     addEventListener('resize', () => { size(); frame(); });
-    // slow turntable while the section is on screen and untouched
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(document.body);
+    // slow turntable while the section is on screen and untouched: at most 5 s per visit, no loop while off-screen or hidden
     if (!reduce && fp === null) {
-      let vis = false;
-      new IntersectionObserver(es => { vis = es[0].isIntersecting; }).observe(sec);
-      const spin = () => { if (vis && !drag && ++idle > 90) { yaw += .0016; frame(); } requestAnimationFrame(spin); };
-      spin();
+      let vis = false, spinRaf = 0, budget = 0, lastT = 0;
+      const spin = t => {
+        spinRaf = 0;
+        if (!vis || document.hidden) return;
+        const dt = lastT ? Math.min(50, t - lastT) : 16; lastT = t;
+        if (!drag && ++idle > 90) { yaw += .0016 * dt / 16.7; frame(); budget += dt; }
+        if (budget < 5000) spinRaf = requestAnimationFrame(spin);
+      };
+      const start = () => { if (!spinRaf && vis && budget < 5000) { lastT = 0; spinRaf = requestAnimationFrame(spin); } };
+      new IntersectionObserver(es => { vis = es[es.length - 1].isIntersecting; if (vis) { budget = 0; idle = 0; start(); } }).observe(sec);
+      stage.addEventListener('pointerup', start);
+      document.addEventListener('visibilitychange', start);
     }
     sec.classList.add('loaded');
   }
