@@ -2,7 +2,7 @@
  "site": {
   "name": "Xinyu Wang",
   "tagline": "Architecture & urban design",
-  "intro": "Small structures that change with the day: canopies that open for a market, rooms that step down a hillside, perforated roofs that scatter sunlight across a botanical garden.",
+  "intro": "Structures that respond to people and time: canopies that open for a market, rooms that step down a hillside, a projected doorway that wakes as you approach.",
   "email": "wangxinyu_2023@163.com",
   "links": [],
   "year": "2026",
@@ -12,7 +12,7 @@
    "bio": [
     "A senior in the BFA Architectural Design program at Parsons School of Design in New York (b. 2004).",
     "Xinyu's projects start from a specific place and a specific time of day, and test ideas through models, drawings and simple simulations: where the sun falls at four in the afternoon, how a cart folds, how light reaches a corridor three floors down.",
-    "The projects here run from sophomore to senior year. Read together, they are a record of learning to build with light, structure and public life."
+    "The projects here range from studio buildings to an interactive installation, a speculative city and an urban plan for Porto. Read together, they are a record of learning to build with light, structure and public life."
    ],
    "lists": [
     [
@@ -54,6 +54,14 @@
       [
        "Making",
        "Physical models, prototypes"
+      ],
+      [
+       "Interaction",
+       "Arduino, Processing"
+      ],
+      [
+       "Real-time",
+       "Unreal Engine 5 (PCG)"
       ]
      ]
     ]
@@ -73,9 +81,15 @@
    "CAD",
    "Parsons School of Design",
    "Blender Cycles",
-   "Lumion"
+   "Lumion",
+   "Arduino Uno",
+   "Arduino",
+   "Processing",
+   "Unreal Engine 5",
+   "PCG"
   ],
-  "work_note": "Newest first: two years of projects, each one a step further than the last."
+  "work_note": "Studio buildings, an interactive installation, a speculative city and an urban plan for Porto.",
+  "work_range": "architecture / installation / urbanism"
  },
  "projects": [
   {
@@ -977,9 +991,686 @@
    "kind_short": "Self-initiated"
   },
   {
-   "slug": "triangle-pavilions",
+   "slug": "threshold-apparatus",
    "publish": true,
    "no": "04",
+   "title": "Threshold Apparatus",
+   "year": "2026",
+   "kind": "Interactive installation · Moving image",
+   "kind_short": "Interactive installation",
+   "place": "Doorways and corridors, projection",
+   "tools": "Arduino Uno, ultrasonic sensor, Processing, projector",
+   "hero": "images/threshold-apparatus/photo-visitor.jpg",
+   "thumb": "images/threshold-apparatus/photo-main.jpg",
+   "summary": "An interactive moving-image study of bodily proximity: a sensor reads how close you are to a doorway, and a projected mesh wakes, deforms and settles as you approach, pause and pass.",
+   "tags": [
+    "Interaction",
+    "Moving image",
+    "Threshold",
+    "Embodied perception"
+   ],
+   "lede": [
+    "Everyday life is full of moments between entering and not yet entering: a pause at a doorway, a slower step at a corridor corner, a moment of hesitation before a glass door. They suggest that a spatial boundary is not only a static element, but something perceived and activated by the body's approach, pause and passage.",
+    "The project asks how interactive moving image can make that threshold visible. Projected onto real transitional spaces, the image stops being something to look at and becomes part of the boundary itself: a spatial skin that responds to the body."
+   ],
+   "stats": [
+    {
+     "value": "5",
+     "label": "states of the projected surface"
+    },
+    {
+     "value": "5",
+     "label": "bodily actions mapped: approach, pause, proximity, crossing, occupying"
+    },
+    {
+     "value": "1",
+     "label": "ultrasonic distance sensor"
+    },
+    {
+     "value": "Real time",
+     "label": "Arduino to Processing over serial"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "Approach, pause, pass",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "wake",
+       "script": "assets/anim/threshold-apparatus.js",
+       "src": "assets/models/threshold-apparatus.js",
+       "labels": [],
+       "hint": "Scroll to walk up to the door, drag to turn it",
+       "caption": "The installation rebuilt as a live diagram: a visitor walks toward a doorway, the ultrasonic sensor above it reads the distance, and the triangulated skin projected on the wall wakes, peaks at the threshold and settles after they pass."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "Research",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "In architecture, a threshold is not simply a doorway or an edge but a transitional condition, connecting inside and outside, open and closed, public and private. Its meaning lies less in form than in how it organises action and perception.",
+        "As one approaches a doorway, the body slows; before a transparent boundary, one checks whether entry is possible; in a narrow passage, posture adjusts. Space is not passively used but continuously formed through its relationship with the body."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/threshold-apparatus/matrix.jpg",
+       "caption": "Body-threshold-space relation matrix: approach, pause, proximity, crossing and occupying, read as movement, threshold state, perception and spatial response."
+      },
+      {
+       "kind": "text",
+       "text": [
+        "So the project should not simply be an interactive video. Moving image acts as a visual skin; bodily distance, movement, pause and orientation are the perceptual data; the image is a threshold field that deforms, expands or contracts; and the physical space is the framework in which meaning is made."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/threshold-apparatus/layers.jpg",
+       "caption": "The logic of responsive spatial generation, in four layers: visual skin, perceptual data, threshold field and spatial framework."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Sensor to image",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "An Arduino reads distance in real time through an ultrasonic sensor and sends it to Processing over serial. Processing maps the distance to an interaction value that drives mesh displacement, colour, opacity and interference.",
+        "The value is smoothed, so the image responds gradually rather than switching on and off: the threshold reads as a continuous spatial event."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/threshold-apparatus/interaction-flow.jpg",
+       "caption": "Interaction flow, State 0 to State 4: idle range, detection, mid-range response, peak threshold and residual closure."
+      },
+      {
+       "kind": "sequence",
+       "anim": "sense",
+       "bg": "#120f0d",
+       "fit": "cover",
+       "meter": [
+        "Far",
+        "Near"
+       ],
+       "hint": "Scroll through the five captured states",
+       "caption": "The five states as captured from the Processing sketch: still while no one is near, waking as a body enters the sensor's range, peaking at the threshold and settling into a residual trace after they leave.",
+       "frames": [
+        {
+         "src": "images/threshold-apparatus/state-0.jpg",
+         "m": 0,
+         "title": "Dormant boundary",
+         "text": "Beyond the sensing range, the interface stays still."
+        },
+        {
+         "src": "images/threshold-apparatus/state-1.jpg",
+         "m": 0.35,
+         "title": "Initial activation",
+         "text": "A body enters the range; a subtle undulation appears."
+        },
+        {
+         "src": "images/threshold-apparatus/state-2.jpg",
+         "m": 0.65,
+         "title": "Spatial negotiation",
+         "text": "Mid-range: the surface reshapes with every movement."
+        },
+        {
+         "src": "images/threshold-apparatus/state-3.jpg",
+         "m": 1,
+         "title": "Threshold intensification",
+         "text": "At the threshold, deformation and interference peak."
+        },
+        {
+         "src": "images/threshold-apparatus/state-4.jpg",
+         "m": 0.1,
+         "title": "Residual closure",
+         "text": "After departure, the trace fades and settles."
+        }
+       ]
+      },
+      {
+       "kind": "half",
+       "src": "images/threshold-apparatus/photo-testing.jpg",
+       "caption": "Testing the sensor against the live sketch."
+      },
+      {
+       "kind": "third",
+       "src": "images/threshold-apparatus/photo-circuit.jpg",
+       "caption": "Arduino Uno and HC-SR04 ultrasonic sensor."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "In the doorway",
+     "toc": "Installation",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The installation is projected onto real spaces with transitional qualities, such as corridors, entrance halls and stair landings, and is activated by the body as it approaches. Transience, responsiveness, corporeality and threshold come together in one dynamic boundary."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/threshold-apparatus/photo-main.jpg",
+       "caption": "The projection wrapping a doorway and the corner of a room."
+      },
+      {
+       "kind": "half",
+       "src": "images/threshold-apparatus/photo-silhouette.jpg",
+       "caption": "A silhouette beside the projected field."
+      },
+      {
+       "kind": "half",
+       "src": "images/threshold-apparatus/photo-wide.jpg",
+       "caption": "The surface at peak intensity, with interference lines across the wall."
+      },
+      {
+       "kind": "half",
+       "src": "images/threshold-apparatus/photo-white-mesh.jpg",
+       "caption": "The dormant white mesh across the door and wall."
+      },
+      {
+       "kind": "half",
+       "src": "images/threshold-apparatus/photo-detail.jpg",
+       "caption": "Detail of the projection on the door frame."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/threshold-apparatus/board-01.jpg",
+     "caption": "Threshold Apparatus"
+    },
+    {
+     "src": "images/threshold-apparatus/board-02.jpg",
+     "caption": "Inspiration and background"
+    },
+    {
+     "src": "images/threshold-apparatus/board-03.jpg",
+     "caption": "Research"
+    },
+    {
+     "src": "images/threshold-apparatus/board-04.jpg",
+     "caption": "Design framework"
+    },
+    {
+     "src": "images/threshold-apparatus/board-05.jpg",
+     "caption": "Final outcome"
+    }
+   ],
+   "note": "",
+   "category": "Installation",
+   "flows": {
+    "process": {
+     "title": "Design process",
+     "steps": [
+      [
+       "Everyday thresholds",
+       "Doorways, corridors, glass doors"
+      ],
+      [
+       "Threshold as transition",
+       "Approach, pause, crossing"
+      ],
+      [
+       "Body-threshold matrix",
+       "Five actions, five responses"
+      ],
+      [
+       "Sensor to image",
+       "Arduino to Processing"
+      ],
+      [
+       "A responsive spatial skin",
+       "Projected onto the doorway"
+      ]
+     ]
+    }
+   },
+   "intro_flow": "process",
+   "hero_alt": "A visitor at the threshold: the projected mesh rises across the door and over their body."
+  },
+  {
+   "slug": "above-the-waterline",
+   "publish": false,
+   "no": "08",
+   "title": "Above the Waterline",
+   "year": "",
+   "kind": "Computational design · Unreal Engine 5 PCG",
+   "kind_short": "Computational design",
+   "place": "Speculative flooded city",
+   "tools": "Unreal Engine 5, Procedural Content Generation (PCG)",
+   "hero": "images/above-the-waterline/r-facade.jpg",
+   "thumb": "images/above-the-waterline/r-facade.jpg",
+   "summary": "A vertical city for a time of rising seas: abandoned high-rises become the foundations for new settlement, grown upward in Unreal Engine 5 by procedural rules.",
+   "tags": [
+    "Computational design",
+    "Climate",
+    "Procedural generation",
+    "Vertical city"
+   ],
+   "lede": [
+    "As rising seas reduce habitable land, the project imagines existing high-rise buildings as the foundation for new forms of settlement. Through adaptive reuse, modular expansion and ecological integration, a vertical urban ecosystem grows upward.",
+    "It was developed in Unreal Engine 5 with Procedural Content Generation: rule-based systems generate architectural modules, parasitic structures, vegetation and spatial hierarchies, simulating how a vertical city attaches, expands and evolves."
+   ],
+   "stats": [
+    {
+     "value": "+1.5-2.5 m",
+     "label": "projected sea-level rise by the 2100s"
+    },
+    {
+     "value": "4",
+     "label": "growth phases"
+    },
+    {
+     "value": "5",
+     "label": "vertical strata, from flooded base to sky garden"
+    },
+    {
+     "value": "4",
+     "label": "module families: facade, floor, roof, base"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "Four phases of growth",
+     "items": [
+      {
+       "kind": "sequence",
+       "anim": "rise",
+       "bg": "#ffffff",
+       "fit": "contain",
+       "hint": "Scroll to grow the tower",
+       "caption": "One tower through four phases, from the original structure to a socially stratified vertical city.",
+       "frames": [
+        {
+         "src": "images/above-the-waterline/phase-1.jpg",
+         "title": "Original structure",
+         "text": "An existing high-rise: the foundation for what follows."
+        },
+        {
+         "src": "images/above-the-waterline/phase-2.jpg",
+         "title": "Emergency occupation",
+         "text": "As land disappears, people attach themselves to the tower."
+        },
+        {
+         "src": "images/above-the-waterline/phase-3.jpg",
+         "title": "Vertical expansion",
+         "text": "Units multiply, connect and stack upward."
+        },
+        {
+         "src": "images/above-the-waterline/phase-4.jpg",
+         "title": "Social stratification",
+         "text": "Resources and living conditions divide by elevation."
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "Settlement to vertical city",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Floating villages in Southeast Asia and post-disaster housing show how modular expansion, self-organised growth and shared infrastructure let communities function with limited resources. Their growth follows a process of attachment, expansion, accumulation and evolution.",
+        "In a vertical city, limited space does not remove inequality but amplifies it: resources, energy and living conditions are stratified by elevation, from a flooded foundation to a sky garden district."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/above-the-waterline/growth-logic.jpg",
+       "caption": "Growth logic: attachment, expansion, layering and evolution."
+      },
+      {
+       "kind": "third",
+       "src": "images/above-the-waterline/r-tower.jpg",
+       "caption": "The tower, with its strata from the flooded base to the sky gardens."
+      }
+     ],
+     "toc": "Concept"
+    },
+    {
+     "no": "03",
+     "title": "Procedural system",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "A modular building library divides architecture into facade, floor, roof and base units that can be reassembled by rule. PCG graphs then generate the city from adjustable parameters: building height, density, attachment distance, growth direction and randomness."
+       ]
+      },
+      {
+       "kind": "half",
+       "src": "images/above-the-waterline/modular-library.jpg",
+       "caption": "Modular building library: facade, floor, roof and base."
+      },
+      {
+       "kind": "wide",
+       "src": "images/above-the-waterline/r-pcg.jpg",
+       "caption": "Adjusting module dimensions in Unreal Engine 5."
+      }
+     ],
+     "toc": "PCG system"
+    },
+    {
+     "no": "04",
+     "title": "Final work",
+     "items": [
+      {
+       "kind": "third",
+       "src": "images/above-the-waterline/r-facade.jpg",
+       "caption": "Accumulated facades."
+      },
+      {
+       "kind": "third",
+       "src": "images/above-the-waterline/r-shaft.jpg",
+       "caption": "The central void of the tower."
+      },
+      {
+       "kind": "third",
+       "src": "images/above-the-waterline/r-interior.jpg",
+       "caption": "Inside the vertical volume."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/above-the-waterline/board-01.jpg",
+     "caption": "Above the Waterline"
+    },
+    {
+     "src": "images/above-the-waterline/board-02.jpg",
+     "caption": "Background and inspiration"
+    },
+    {
+     "src": "images/above-the-waterline/board-03.jpg",
+     "caption": "Research"
+    },
+    {
+     "src": "images/above-the-waterline/board-04.jpg",
+     "caption": "Design concept"
+    },
+    {
+     "src": "images/above-the-waterline/board-05.jpg",
+     "caption": "Design development"
+    },
+    {
+     "src": "images/above-the-waterline/board-06.jpg",
+     "caption": "Final work"
+    }
+   ],
+   "note": "",
+   "category": "Computational",
+   "flows": {
+    "process": {
+     "title": "Design process",
+     "steps": [
+      [
+       "Rising seas",
+       "Habitable land disappears"
+      ],
+      [
+       "Floating settlements",
+       "Attachment, expansion, accumulation"
+      ],
+      [
+       "Reuse the towers",
+       "Old high-rises as foundations"
+      ],
+      [
+       "Modular library",
+       "Facade, floor, roof, base"
+      ],
+      [
+       "PCG growth",
+       "Rules generate the vertical city"
+      ]
+     ]
+    }
+   },
+   "intro_flow": "process"
+  },
+  {
+   "slug": "human-race-motor",
+   "publish": true,
+   "no": "05",
+   "title": "Human Race Motor",
+   "year": "2026",
+   "kind": "Individual work · Speculative urbanism",
+   "kind_short": "Speculative urbanism",
+   "place": "Speculative space city",
+   "tools": "Cellular automata, collage, axonometric drawing",
+   "hero": "images/human-race-motor/hero-axon.jpg",
+   "thumb": "images/human-race-motor/r-street.jpg",
+   "summary": "A city grown by rules instead of drawn by hand: cellular automata generate unit towers, the best are selected as the shell, and a space city takes shape around four zones and walkways in zero gravity.",
+   "tags": [
+    "Speculative urbanism",
+    "Cellular automata",
+    "Collage",
+    "Urban morphology"
+   ],
+   "lede": [
+    "Technology and nature are two routes through the long river of human civilisation, each moving forward on its own track until they meet at the far end. The history of technology is a process of constantly stealing fire; where people gather, everyday city life becomes its most authentic exhibition.",
+    "Here the city is generated rather than drawn. Cellular automata, which can simulate how complex systems evolve in space and time, grow a field of unit towers. Selected by set rules, the towers become the outer shell that houses the city's functional blocks, organised into four zones and threaded by walkways."
+   ],
+   "stats": [
+    {
+     "value": "45",
+     "label": "unit tower variants in the AA-1 matrix"
+    },
+    {
+     "value": "4",
+     "label": "zones: government and science, living, transport, manufacturing"
+    },
+    {
+     "value": "4",
+     "label": "case cities: Melbourne, Barcelona, Paris, New York"
+    },
+    {
+     "value": "1957",
+     "label": "first satellite in space: where the timeline starts"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "model",
+     "no": "01",
+     "title": "From rule to city",
+     "items": [
+      {
+       "kind": "model3d",
+       "anim": "ca",
+       "script": "assets/anim/human-race-motor.js",
+       "src": "assets/models/human-race-motor.js",
+       "labels": [],
+       "hint": "Scroll to grow the city, drag to turn it",
+       "caption": "A diagram of the method, grown live: a growth rule adds unit-tower bars around one transport spine generation by generation, selection removes the loose ends, four zones tint the shell and walkways reach out between the blocks."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "How cities grow",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The research sets the space race beside a century of urban models, from the City Beautiful and the Garden City to the sustainable city.",
+        "Four cities show how blocks change over time: in Melbourne plots consolidate from the economic centre out to the fringe; in Barcelona blocks group into communities and then urban areas; Paris opens wide channels so the city can breathe; Manhattan grows vertically, up and into the basement."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/human-race-motor/timeline-collage.jpg",
+       "caption": "The development of the space city, 1957 to the 2020s, set against a century of urban models."
+      },
+      {
+       "kind": "third",
+       "src": "images/human-race-motor/morphology.jpg",
+       "caption": "Urban morphology over time: Melbourne, Barcelona, Paris and New York."
+      },
+      {
+       "kind": "half",
+       "src": "images/human-race-motor/city-collage.jpg",
+       "caption": "Cover collage."
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Unit towers and zones",
+     "toc": "Towers and zones",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Among the many structures generated, the final unit towers were chosen by the selection rules to serve as the outer boundary: the shell of the suspended part of the design, housing the functional blocks and their combinations."
+       ]
+      },
+      {
+       "kind": "sequence",
+       "anim": "wipe",
+       "bg": "#111",
+       "fit": "contain",
+       "ar": 1.0,
+       "hint": "Scroll from unit to plan",
+       "caption": "From unit to city: the unit tower variants, their aggregates, and the plan of the city along its central spine.",
+       "frames": [
+        {
+         "src": "images/human-race-motor/unit-tower-variants.jpg",
+         "title": "Unit tower variants",
+         "text": "Part of the AA-1 matrix of unit towers."
+        },
+        {
+         "src": "images/human-race-motor/unit-towers.jpg",
+         "title": "Determination of unit towers",
+         "text": "Unit towers combined into larger aggregates."
+        },
+        {
+         "src": "images/human-race-motor/city-plan-clean.jpg",
+         "title": "Plan",
+         "text": "The city gathered along one spine."
+        }
+       ]
+      },
+      {
+       "kind": "text",
+       "text": [
+        "The city is divided into four zones: government offices, law enforcement and science labs; housing, a hospital and shopping; transport; and manufacturing."
+       ]
+      },
+      {
+       "kind": "half",
+       "src": "images/human-race-motor/zones.jpg",
+       "caption": "The four zones: government and science, living, transport and manufacturing."
+      },
+      {
+       "kind": "wide",
+       "src": "images/human-race-motor/unit-tower-matrix.jpg",
+       "caption": "Unit tower variants (AA-1), the full matrix.",
+       "more": true
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Space between buildings",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "In a society that only focuses on work and production, housing grows layer by layer around the workplace and takes over every open space. Yet people always find the space that has not been built on yet and make it a place to meet; when it is built over, they find new space.",
+        "Without gravity, people can move between buildings and districts at will, while the city keeps fixed lines of transport. The walkways above the transport pipes are among the few places left for people to walk and talk."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/human-race-motor/r-street.jpg",
+       "caption": "A street in the space city: residents in helmets crossing under the towers."
+      },
+      {
+       "kind": "wide",
+       "src": "images/human-race-motor/r-walkway.jpg",
+       "caption": "A walkway above the transport line, with cable cars between the blocks."
+      }
+     ],
+     "toc": "Space"
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/human-race-motor/board-01.jpg",
+     "caption": "Human Race Motor"
+    },
+    {
+     "src": "images/human-race-motor/board-02.jpg",
+     "caption": "Development of the space city"
+    },
+    {
+     "src": "images/human-race-motor/board-03.jpg",
+     "caption": "Cellular automata and unit towers"
+    },
+    {
+     "src": "images/human-race-motor/board-04.jpg",
+     "caption": "Zones and plan"
+    },
+    {
+     "src": "images/human-race-motor/board-05.jpg",
+     "caption": "Space"
+    }
+   ],
+   "note": "",
+   "category": "Speculative",
+   "flows": {
+    "process": {
+     "title": "Design process",
+     "steps": [
+      [
+       "How cities grow",
+       "Melbourne, Barcelona, Paris, New York"
+      ],
+      [
+       "Cellular automata",
+       "Rules simulate growth over time"
+      ],
+      [
+       "Select the unit towers",
+       "A shell for every function"
+      ],
+      [
+       "Four zones",
+       "Government, living, transport, industry"
+      ],
+      [
+       "Space between buildings",
+       "Walkways in zero gravity"
+      ]
+     ]
+    }
+   },
+   "intro_flow": "process"
+  },
+  {
+   "slug": "triangle-pavilions",
+   "publish": true,
+   "no": "06",
    "title": "Triangle Commons",
    "year": "Spring 2025",
    "kind": "Sophomore studio · Multi-purpose building",
@@ -1280,6 +1971,242 @@
    },
    "intro_flow": "process",
    "kind_short": "Studio · Multi-purpose building"
+  },
+  {
+   "slug": "aleixo-porto",
+   "publish": true,
+   "no": "07",
+   "title": "From Urbanity to Nature",
+   "year": "",
+   "kind": "Urban design · Wine culture community",
+   "kind_short": "Urban design",
+   "place": "Aleixo, Porto, Portugal",
+   "tools": "Mapping, diagrams, collage",
+   "hero": "images/aleixo/hero-axon.jpg",
+   "thumb": "images/aleixo/masterplan-card.jpg",
+   "summary": "A wine culture community on the last unbuilt stretch of Porto's Douro riverfront: vineyards, orchards, a winery, homes and a hotel woven into the park, so the journey to port wine ends inside the city.",
+   "tags": [
+    "Urban design",
+    "Landscape",
+    "Agriculture",
+    "Community"
+   ],
+   "lede": [
+    "Porto has been transformed over the last decade, and the Douro riverfront has drawn the most building. Aleixo, a social housing complex under demolition, is the last front of the river without construction: a green valley with a natural cliff dropping to the river and the sea. Should we build there, and how can nature and architecture be balanced?",
+    "Visitors come to Porto for its wine, yet the vineyards and wineries are far from the centre. The project keeps the green texture of the land but turns it into urban agriculture, and adds a winery, homes, a trade centre and a hotel, so that wine tourists and locals meet in one community: production and consumption, nature and architecture, making and enjoying."
+   ],
+   "stats": [
+    {
+     "value": "4",
+     "label": "programmes: agriculture, wine culture, community, commerce"
+    },
+    {
+     "value": "5",
+     "label": "buildings in plan, section and perspective"
+    },
+    {
+     "value": "5",
+     "label": "senses along the journey"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "journey",
+     "no": "01",
+     "title": "A journey through the site",
+     "toc": "Journey",
+     "items": [
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-supermarket-tower.jpg",
+       "caption": "Supermarket and tower: the tower rises behind rows of vines."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-housing-block.jpg",
+       "caption": "Housing block: homes set among cultivated plots."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-winery-upper.jpg",
+       "caption": "Winery, first floor: a planted roof looking out to the river."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-winery-ground.jpg",
+       "caption": "Winery, ground floor: the winery among the vineyards."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-hotel.jpg",
+       "caption": "Hotel: the pool."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/r-trade-centre.jpg",
+       "caption": "Trade centre: where visitors and locals do business."
+      }
+     ]
+    },
+    {
+     "no": "02",
+     "title": "City to site",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "Porto is one of the most popular cities in Europe and famous for its wine, but the vineyards and wineries visitors want to see are far from the centre.",
+        "Three things make Aleixo the site: a green park with abandoned buildings and a natural cliff over the river and the sea; the last unbuilt front on the Douro; and the tourist tram that passes through it. The Douro, the river of wine, is drawn in red."
+       ]
+      },
+      {
+       "kind": "wide",
+       "src": "images/aleixo/destination-collage.jpg",
+       "caption": "Destination: where to stay in Porto, and where to enjoy port wine."
+      },
+      {
+       "kind": "half",
+       "src": "images/aleixo/city-analysis.jpg",
+       "caption": "City analysis of Porto, with the Douro in red."
+      },
+      {
+       "kind": "half",
+       "src": "images/aleixo/site-position.jpg",
+       "caption": "Site position: Aleixo on the Douro, with the tramline."
+      },
+      {
+       "kind": "wide",
+       "src": "images/aleixo/porto-sketch.jpg",
+       "caption": "Sketch of Porto along the river.",
+       "more": true
+      }
+     ]
+    },
+    {
+     "no": "03",
+     "title": "Strategy",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The site was a green area with two walls. The structure preserves the landscape and opens to the city from every corner. Organic and strong paths merge into one journey that ends at the pier or at the green amphitheatre of the park.",
+        "Visitors can walk over the buildings, through the landscape, or from one to the other, as the ground gradually sinks; the path offers the landscape to every sense."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/strategy.jpg",
+       "caption": "Strategy: entrances, axis and links, experiences, zoning, water system and journey."
+      },
+      {
+       "kind": "half",
+       "src": "images/aleixo/exploded-axon.jpg",
+       "caption": "From idea to measure: exploded axonometric of the supermarket, housing, winery, houses, hotel, trade centre and pier."
+      },
+      {
+       "kind": "half",
+       "src": "images/aleixo/masterplan.jpg",
+       "caption": "Masterplan on the aerial photograph, with the pier on the Douro."
+      }
+     ]
+    },
+    {
+     "no": "04",
+     "title": "Plans and sections",
+     "items": [
+      {
+       "kind": "plate",
+       "src": "images/aleixo/plans-1-drawings.jpg",
+       "caption": "Supermarket and tower, housing block and winery first floor: plans and sections."
+      },
+      {
+       "kind": "plate",
+       "src": "images/aleixo/plans-2-drawings.jpg",
+       "caption": "Winery ground floor, hotel and trade centre: plans and sections."
+      }
+     ]
+    },
+    {
+     "no": "05",
+     "title": "Five senses",
+     "items": [
+      {
+       "kind": "text",
+       "text": [
+        "The journey is designed around five senses. Smell: the aromas of grapes, fruit and vegetables through the year. Touch: the ups and downs of the landscape and the textured walls on the way to the winery. Sight: from the top of the winery, a panoramic view of the Douro and the pier.",
+        "Taste: wine and local cuisine with the best views. Hearing: wind through the trees, and water running from the highest point along the winery down to the pond in the park."
+       ]
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/sections.jpg",
+       "caption": "Topography: sections through the site and buildings."
+      },
+      {
+       "kind": "third",
+       "src": "images/aleixo/five-senses.jpg",
+       "caption": "5D experiences: smell, touch, sight, taste and hearing."
+      }
+     ]
+    }
+   ],
+   "boards": [
+    {
+     "src": "images/aleixo/board-01.jpg",
+     "caption": "Destination"
+    },
+    {
+     "src": "images/aleixo/board-02-city.jpg",
+     "caption": "City analysis"
+    },
+    {
+     "src": "images/aleixo/board-03.jpg",
+     "caption": "From urbanity to nature"
+    },
+    {
+     "src": "images/aleixo/board-strategy.jpg",
+     "caption": "Strategy and from idea to measure"
+    },
+    {
+     "src": "images/aleixo/board-04.jpg",
+     "caption": "All journeys have secret destinations"
+    },
+    {
+     "src": "images/aleixo/board-05.jpg",
+     "caption": "Topography and 5D experiences"
+    }
+   ],
+   "note": "",
+   "category": "Urban design",
+   "flows": {
+    "process": {
+     "title": "Design process",
+     "steps": [
+      [
+       "Porto and its wine",
+       "The vineyards are far from the city"
+      ],
+      [
+       "Aleixo",
+       "The last unbuilt riverfront"
+      ],
+      [
+       "Keep it green",
+       "The park becomes urban agriculture"
+      ],
+      [
+       "A wine culture community",
+       "Winery, homes, trade, hotel"
+      ],
+      [
+       "A journey through the senses",
+       "Smell, touch, sight, taste, hearing"
+      ]
+     ]
+    }
+   },
+   "intro_flow": "process",
+   "hero_alt": "Exploded axonometric of the winery, houses and hotel over the planted landscape of Aleixo."
   },
   {
    "slug": "architectural-screens",

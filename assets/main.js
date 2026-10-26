@@ -64,6 +64,43 @@
     if (window.ResizeObserver) new ResizeObserver(() => { measure(); draw(); }).observe(document.body);
   });
 
+  // scroll image sequence (projects without a 3D model): scroll position steps through the frames; each project has its own
+  // transition — sense: crossfade + proximity meter, wipe: left-to-right reveal, walk: crossfade with a slow push-in,
+  // rise: reveal from the ground up. Reduced motion: frames swap at the midpoint, nothing animates in between.
+  document.querySelectorAll('[data-seq]').forEach(sec => {
+    const fr = [...sec.querySelectorAll('.seq-f')], n = fr.length;
+    if (n < 2) return;
+    const steps = [...sec.querySelectorAll('.m3-steps li')], bar = sec.querySelector('.ex-bar span'), dot = sec.querySelector('.seq-meter i');
+    const anim = sec.dataset.anim, mv = fr.map(f => parseFloat(f.dataset.m) || 0);
+    const clamp = v => Math.min(1, Math.max(0, v)), sm = t => t * t * (3 - 2 * t);
+    const fp = new URLSearchParams(location.search).get('seq');
+    let top = 0, span = 1, raf = 0, cur = -1;
+    const measure = () => { top = sec.getBoundingClientRect().top + scrollY; span = Math.max(1, sec.offsetHeight - innerHeight); };
+    const show = (f, e) => {          // e: 0 hidden ... 1 fully shown
+      const s = f.style;
+      if (anim === 'wipe') s.clipPath = 'inset(0 ' + ((1 - e) * 100).toFixed(2) + '% 0 0)';
+      else if (anim === 'rise') s.clipPath = 'inset(' + ((1 - e) * 100).toFixed(2) + '% 0 0 0)';
+      else s.opacity = e.toFixed(3);
+      if (anim === 'walk') s.transform = 'scale(' + (1.06 - .06 * e).toFixed(4) + ')';
+    };
+    const draw = () => {
+      raf = 0;
+      let p = clamp((scrollY - top) / span);
+      if (fp !== null) p = +fp;
+      const pos = clamp((p - .06) / .86) * (n - 1), k = Math.min(n - 2, Math.floor(pos)), t = pos - k;
+      const e = reduce ? (t >= .5 ? 1 : 0) : sm(clamp((t - .2) / .6));
+      fr.forEach((f, i) => show(f, i <= k ? 1 : i === k + 1 ? e : 0));
+      const c = e >= .5 ? k + 1 : k;
+      if (c !== cur) { cur = c; steps.forEach((li, i) => { li.classList.toggle('on', i === c); li.classList.toggle('done', i < c); }); }
+      if (dot) dot.style.left = ((mv[k] + (mv[k + 1] - mv[k]) * e) * 100).toFixed(2) + '%';
+      bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+    };
+    measure(); draw();
+    addEventListener('scroll', () => { if (!raf && scrollY + innerHeight > top - 200 && scrollY < top + span + innerHeight + 200) raf = requestAnimationFrame(draw); }, { passive: true });
+    addEventListener('resize', () => { measure(); draw(); });
+    if (window.ResizeObserver) new ResizeObserver(() => { measure(); draw(); }).observe(document.body);
+  });
+
   // gallery lightbox: prev/next buttons (also on phones), keyboard (pan when zoomed), swipe, counter, shareable #image-N,
   // a real modal: the rest of the page is inert while it is open, and Back closes it
   const links = [...document.querySelectorAll('a.zoom')];

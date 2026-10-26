@@ -502,3 +502,28 @@ figure.tallrow .tall-copy figcaption{margin-top:18px;padding-top:10px;border-top
   .p-hero .t{bottom:24px}
   .p-hero h1{font-size:min(9.5vw,24svh)}
 }
+
+/* ---------- scroll image sequence (projects without a 3D model; main.js [data-seq]) ---------- */
+.seq{position:relative}
+html.js .seq{height:calc(var(--n) * 70vh + 70vh)}
+html:not(.js) .seq .ex-sticky{position:static;height:auto;display:block}
+.seq-stage{position:relative;width:100%;max-width:min(var(--mw),calc((100vh - 190px) * var(--ar)));aspect-ratio:var(--ar);margin:0 auto;background:var(--sbg,#111);overflow:hidden}
+.seq-f{position:absolute;inset:0;margin:0;background:var(--sbg,#111);will-change:opacity,clip-path,transform}
+.seq-f+.seq-f{opacity:0}
+.seq-wipe .seq-f+.seq-f,.seq-rise .seq-f+.seq-f{opacity:1;clip-path:inset(0 100% 0 0)}
+.seq-f picture,.seq-f img{display:block;width:100%;height:100%}
+.seq-f img{object-fit:var(--fit,cover);background-image:none!important}
+html:not(.js) .seq-stage{aspect-ratio:auto;max-width:var(--mw);background:none}
+html:not(.js) .seq-f{position:static;opacity:1!important;clip-path:none!important;margin-bottom:12px}
+html:not(.js) .seq-f img{height:auto}
+.seq-meter{display:flex;align-items:center;gap:12px;max-width:340px;margin-top:20px;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.seq-meter b{position:relative;flex:1;height:2px;background:var(--line)}
+.seq-meter i{position:absolute;top:50%;left:0;width:11px;height:11px;border-radius:50%;background:var(--accent);transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(244,242,236,.9)}
+@media (max-width:900px){
+  html.js .seq{height:calc(var(--n) * 60vh + 60vh)}
+  .seq .ex-sticky{display:flex;flex-direction:column;align-items:stretch;height:calc(100svh - 120px)}
+  .seq .ex-copy{flex:none}
+  .seq-stage{max-width:min(var(--mw),calc((100svh - 360px) * var(--ar)));margin-top:14px}
+  .seq-meter{margin-top:12px}
+}
+@media (prefers-reduced-motion:reduce){.seq-f{will-change:auto}}
